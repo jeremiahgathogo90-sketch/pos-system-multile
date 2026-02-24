@@ -68,118 +68,7 @@ interface ShiftSummary {
   openingAmount: number
 }
 
-function ShiftSummaryModal({ summary, onClose }: { summary: ShiftSummary; onClose: () => void }) {
-  const printRef = useRef<HTMLDivElement>(null)
-
-  const handlePrint = () => {
-    const content = printRef.current?.innerHTML
-    if (!content) return
-    const w = window.open('', '_blank', 'width=420,height=750')
-    if (!w) { toast.error('Allow popups to print'); return }
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Shift Summary</title>
-    <style>
-      *{margin:0;padding:0;box-sizing:border-box}
-      body{font-family:'Courier New',monospace;font-size:12px;width:80mm;margin:0 auto;padding:4mm}
-      .c{text-align:center}.b{font-weight:bold}.lg{font-size:15px}.xl{font-size:18px}
-      .dash{border-top:1px dashed #555;margin:6px 0}.solid{border-top:2px solid #000;margin:6px 0}
-      .row{display:flex;justify-content:space-between;margin:3px 0}
-      .row.total{font-size:14px;font-weight:bold}
-      .green{color:#16a34a}.red{color:#dc2626}.blue{color:#2563eb}
-      @media print{body{width:80mm}@page{margin:0;size:80mm auto}}
-    </style></head><body>
-    ${content}
-    <script>window.onload=function(){window.print();setTimeout(function(){window.close()},600)}<\/script>
-    </body></html>`)
-    w.document.close()
-  }
-
-  const esc = (s: string) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-  const fmt = (n: number) => `KES ${n.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`
-
-  return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[95vh]">
-
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-black text-gray-800">Shift Closed</h3>
-              <p className="text-xs text-gray-400">End of shift summary</p>
-            </div>
-          </div>
-          <button onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
-            <X className="w-4 h-4 text-gray-500" />
-          </button>
-        </div>
-
-        {/* Printable summary */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 font-mono text-xs leading-relaxed">
-            <div ref={printRef}>
-              {/* Receipt content */}
-              <div className="text-center font-bold text-base mb-0.5">SHIFT SUMMARY</div>
-              <div className="text-center text-gray-600 text-xs mb-1">{summary.branchName}</div>
-              <div className="border-t border-dashed border-gray-400 my-2" />
-
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Cashier</span><span className="font-semibold">{summary.cashierName}</span></div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Branch</span><span className="font-semibold">{summary.branchName}</span></div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Shift Opened</span><span className="font-semibold">{new Date(summary.openedAt).toLocaleString('en-KE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</span></div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Shift Closed</span><span className="font-semibold">{new Date(summary.closedAt).toLocaleString('en-KE', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</span></div>
-
-              <div className="border-t border-dashed border-gray-400 my-2" />
-
-              <div className="text-center font-bold text-xs text-gray-600 mb-1">SALES BREAKDOWN</div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Cash Sales</span><span className="font-semibold text-green-700">{fmt(summary.cash)}</span></div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Card / Bank</span><span className="font-semibold text-blue-700">{fmt(summary.card)}</span></div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">M-Pesa</span><span className="font-semibold text-purple-700">{fmt(summary.mpesa)}</span></div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Credit</span><span className="font-semibold text-orange-700">{fmt(summary.credit)}</span></div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Transactions</span><span className="font-semibold">{summary.count} sales</span></div>
-
-              <div className="border-t-2 border-gray-800 my-2" />
-              <div className="flex justify-between py-0.5 text-sm font-black"><span>TOTAL SALES</span><span>{fmt(summary.total)}</span></div>
-
-              <div className="border-t border-dashed border-gray-400 my-2" />
-
-              <div className="text-center font-bold text-xs text-gray-600 mb-1">CASH RECONCILIATION</div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Opening Float</span><span>{fmt(summary.openingAmount)}</span></div>
-              <div className="flex justify-between py-0.5"><span className="text-gray-500">Cash Sales</span><span>+ {fmt(summary.cash)}</span></div>
-              <div className="flex justify-between py-0.5 font-semibold"><span>Expected in Till</span><span>{fmt(summary.expected)}</span></div>
-              <div className="flex justify-between py-0.5 font-semibold"><span>Actual Count</span><span>{fmt(summary.closingAmount)}</span></div>
-
-              <div className={`flex justify-between py-0.5 font-black text-sm mt-1 ${summary.variance === 0 ? 'text-green-700' : summary.variance > 0 ? 'text-blue-700' : 'text-red-700'}`}>
-                <span>{summary.variance === 0 ? '✓ Balanced' : summary.variance > 0 ? '↑ Overage' : '↓ Shortage'}</span>
-                <span>{summary.variance !== 0 ? `${summary.variance > 0 ? '+' : ''}${fmt(Math.abs(summary.variance))}` : ''}</span>
-              </div>
-
-              <div className="border-t border-dashed border-gray-400 my-2" />
-              <div className="text-center text-gray-400 text-xs">Generated {new Date().toLocaleString('en-KE')}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="px-5 py-4 border-t border-gray-100 flex gap-3 shrink-0">
-          <button onClick={onClose}
-            className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">
-            Close
-          </button>
-          <button onClick={handlePrint}
-            className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2">
-            <Printer className="w-4 h-4" />
-            Print Summary
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function RegisterModal({ mode, onComplete, onShiftClosed }: { mode: 'open' | 'close'; onComplete: () => void; onShiftClosed?: (s: ShiftSummary) => void }) {
+function RegisterModal({ mode, onComplete }: { mode: 'open' | 'close'; onComplete: () => void }) {
   const { profile } = useAuthStore()
   const { registerId, openingAmount, openedAt, setRegister, closeRegister } = useRegisterStore()
   const [amount, setAmount]         = useState('')
@@ -187,6 +76,9 @@ function RegisterModal({ mode, onComplete, onShiftClosed }: { mode: 'open' | 'cl
   const [isLoading, setIsLoading]   = useState(false)
   const [sessionSummary, setSS]     = useState<any>(null)
   const [fetchingSS, setFetchingSS] = useState(false)
+  // When this is set the modal switches to summary view — no unmount/remount needed
+  const [shiftDone, setShiftDone]   = useState<ShiftSummary | null>(null)
+  const printRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { if (mode === 'close') fetchSS() }, [mode])
 
@@ -230,46 +122,139 @@ function RegisterModal({ mode, onComplete, onShiftClosed }: { mode: 'open' | 'cl
     const closing = parseFloat(amount) || 0
     setIsLoading(true)
     try {
+      const closedAt = new Date().toISOString()
       const { error } = await supabase.from('cash_registers').update({
         closing_amount: closing, expected_amount: sessionSummary?.expected || 0,
         cash_sales: sessionSummary?.cash || 0, card_sales: sessionSummary?.card || 0,
         mpesa_sales: sessionSummary?.mpesa || 0, credit_sales: sessionSummary?.credit || 0,
         total_sales: sessionSummary?.total || 0, transaction_count: sessionSummary?.count || 0,
-        status: 'closed', closed_at: new Date().toISOString(), notes: notes || null,
+        status: 'closed', closed_at: closedAt, notes: notes || null,
       }).eq('id', registerId)
       if (error) throw error
 
-      // Build the summary before clearing register state
-      const closedAt = new Date().toISOString()
-      const closingAmt = parseFloat(amount) || 0
       const ss = sessionSummary
       const summaryData: ShiftSummary = {
-        cashierName:    profile?.full_name || 'Unknown',
-        branchName:     profile?.location?.name || 'Main Branch',
-        openedAt:       openedAt || closedAt,
+        cashierName: profile?.full_name || 'Unknown',
+        branchName:  profile?.location?.name || 'Main Branch',
+        openedAt:    openedAt || closedAt,
         closedAt,
-        closingAmount:  closingAmt,
+        closingAmount: closing,
         openingAmount,
-        cash:           ss?.cash   || 0,
-        card:           ss?.card   || 0,
-        mpesa:          ss?.mpesa  || 0,
-        credit:         ss?.credit || 0,
-        total:          ss?.total  || 0,
-        count:          ss?.count  || 0,
-        expected:       ss?.expected || 0,
-        variance:       closingAmt - (ss?.expected || 0),
+        cash:     ss?.cash   || 0,
+        card:     ss?.card   || 0,
+        mpesa:    ss?.mpesa  || 0,
+        credit:   ss?.credit || 0,
+        total:    ss?.total  || 0,
+        count:    ss?.count  || 0,
+        expected: ss?.expected || 0,
+        variance: closing - (ss?.expected || 0),
       }
 
-      closeRegister()
+      // Don't call closeRegister() yet — if we do, !registerIsOpen fires immediately
+      // and POSPage re-renders to the open-register screen before shiftDone renders.
+      // closeRegister() is called below when user dismisses the summary.
       toast.success('Register closed. Shift ended!')
-      onShiftClosed?.(summaryData)
-      // onComplete is called by parent after summary is dismissed
+      setShiftDone(summaryData)
     } catch (err: any) {
       toast.error(err.message || 'Failed to close register')
     } finally { setIsLoading(false) }
   }
 
+  const handlePrint = () => {
+    const printContent = printRef.current?.innerHTML
+    if (!printContent) return
+    const w = window.open('', '_blank', 'width=420,height=750')
+    if (!w) { toast.error('Allow popups to print'); return }
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Shift Summary</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:'Courier New',monospace;font-size:12px;width:80mm;margin:0 auto;padding:4mm}
+      .c{text-align:center}.b{font-weight:bold}
+      .dash{border-top:1px dashed #555;margin:6px 0}
+      .solid{border-top:2px solid #000;margin:6px 0}
+      .row{display:flex;justify-content:space-between;margin:3px 0}
+      @media print{body{width:80mm}@page{margin:0;size:80mm auto}}
+    </style></head><body>
+    ${printContent}
+    <script>window.onload=function(){window.print();setTimeout(function(){window.close()},600)}<\/script>
+    </body></html>`)
+    w.document.close()
+  }
+
+  const fmt = (n: number) => `KES ${n.toLocaleString('en-KE', { minimumFractionDigits: 2 })}`
   const variance = sessionSummary && amount ? (parseFloat(amount) || 0) - sessionSummary.expected : 0
+
+  // ── SUMMARY VIEW (after shift is closed) ──────────────
+  if (shiftDone) {
+    const s = shiftDone
+    return (
+      <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[95vh]">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-black text-gray-800">Shift Closed</h3>
+                <p className="text-xs text-gray-400">End of shift summary</p>
+              </div>
+            </div>
+            <button onClick={onComplete}
+              className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 font-mono text-xs leading-relaxed">
+              <div ref={printRef}>
+                <div className="text-center font-bold text-sm mb-0.5">SHIFT SUMMARY</div>
+                <div className="text-center text-gray-500 text-xs">{s.branchName}</div>
+                <div className="border-t border-dashed border-gray-400 my-2" />
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Cashier</span><span className="font-semibold">{s.cashierName}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Branch</span><span className="font-semibold">{s.branchName}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Opened</span><span className="font-semibold">{new Date(s.openedAt).toLocaleString('en-KE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Closed</span><span className="font-semibold">{new Date(s.closedAt).toLocaleString('en-KE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span></div>
+                <div className="border-t border-dashed border-gray-400 my-2" />
+                <div className="text-center font-bold text-xs text-gray-500 mb-1">SALES BREAKDOWN</div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Cash</span><span className="font-semibold text-green-700">{fmt(s.cash)}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Card / Bank</span><span className="font-semibold text-blue-700">{fmt(s.card)}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">M-Pesa</span><span className="font-semibold text-purple-700">{fmt(s.mpesa)}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Credit</span><span className="font-semibold text-orange-700">{fmt(s.credit)}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Transactions</span><span className="font-semibold">{s.count} sales</span></div>
+                <div className="border-t-2 border-gray-800 my-2" />
+                <div className="flex justify-between py-0.5 font-black text-sm"><span>TOTAL SALES</span><span>{fmt(s.total)}</span></div>
+                <div className="border-t border-dashed border-gray-400 my-2" />
+                <div className="text-center font-bold text-xs text-gray-500 mb-1">CASH RECONCILIATION</div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">Opening Float</span><span>{fmt(s.openingAmount)}</span></div>
+                <div className="flex justify-between py-0.5"><span className="text-gray-500">+ Cash Sales</span><span>{fmt(s.cash)}</span></div>
+                <div className="flex justify-between py-0.5 font-semibold"><span>Expected in Till</span><span>{fmt(s.expected)}</span></div>
+                <div className="flex justify-between py-0.5 font-semibold"><span>Actual Count</span><span>{fmt(s.closingAmount)}</span></div>
+                <div className={`flex justify-between py-0.5 font-black text-sm mt-1 ${s.variance===0?'text-green-700':s.variance>0?'text-blue-700':'text-red-700'}`}>
+                  <span>{s.variance===0?'✓ Balanced':s.variance>0?'↑ Overage':'↓ Shortage'}</span>
+                  <span>{s.variance!==0?`${s.variance>0?'+':''}${fmt(Math.abs(s.variance))}`:''}</span>
+                </div>
+                <div className="border-t border-dashed border-gray-400 my-2" />
+                <div className="text-center text-gray-400 text-xs">{new Date().toLocaleString('en-KE')}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-4 border-t border-gray-100 flex gap-3 shrink-0">
+            <button onClick={onComplete}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">
+              Close
+            </button>
+            <button onClick={handlePrint}
+              className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2">
+              <Printer className="w-4 h-4" />Print Summary
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (mode === 'open') return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -321,6 +306,7 @@ function RegisterModal({ mode, onComplete, onShiftClosed }: { mode: 'open' | 'cl
     </div>
   )
 
+  // ── CLOSE REGISTER VIEW ───────────────────────────────
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] border border-gray-200">
@@ -552,7 +538,8 @@ function PaymentModal({total,selectedCustomer,onComplete,onClose}:{
 // ── Main POS Page ────────────────────────────────────────
 export default function POSPage() {
   const { profile } = useAuthStore()
-  const { isOpen: registerIsOpen, openingAmount, openedAt } = useRegisterStore()
+  const { isOpen: registerIsOpen, openingAmount, openedAt, closeRegister } = useRegisterStore()
+
   const {
     cart, addToCart, removeFromCart, clearCart,
     selectedCustomer, setCustomer,
@@ -584,7 +571,6 @@ export default function POSPage() {
   const [showRecent, setShowRecent]               = useState(false)
   const [showCreateCustomer, setShowCreateCustomer] = useState(false)
   const [showCloseRegister, setShowCloseRegister] = useState(false)
-  const [shiftSummary, setShiftSummary] = useState<ShiftSummary | null>(null)
   const [receiptData, setReceiptData]             = useState<ReceiptData | null>(null)
   const [suspendedOrders, setSuspendedOrders]     = useState<any[]>([])
   const [recentSales, setRecentSales]             = useState<any[]>([])
@@ -831,6 +817,7 @@ export default function POSPage() {
     return (
       <div className="relative flex h-[calc(100vh-2rem)] -mt-6 -mx-6 bg-gray-100 overflow-hidden">
         <div className="flex-1 filter blur-sm pointer-events-none select-none opacity-50 bg-gray-100"/>
+        {/* Show shift summary BEFORE the open-register modal if one is waiting */}
         <RegisterModal mode="open" onComplete={() => {}} />
       </div>
     )
@@ -1189,8 +1176,7 @@ export default function POSPage() {
       </div>
 
       {/* MODALS */}
-      {showCloseRegister&&<RegisterModal mode="close" onComplete={()=>setShowCloseRegister(false)} onShiftClosed={(s)=>{setShowCloseRegister(false);setShiftSummary(s)}}/>}
-      {shiftSummary&&<ShiftSummaryModal summary={shiftSummary} onClose={()=>setShiftSummary(null)}/>}
+      {showCloseRegister&&<RegisterModal mode="close" onComplete={()=>{setShowCloseRegister(false);closeRegister()}}/>}
       {showPayModal&&<PaymentModal total={total} selectedCustomer={selectedCustomer} onComplete={handleCheckout} onClose={()=>setShowPayModal(false)}/>}
       {receiptData&&<ThermalReceipt data={receiptData} onClose={()=>setReceiptData(null)}/>}
 
