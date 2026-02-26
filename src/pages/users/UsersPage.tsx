@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
-import type { Profile, Location, UserRole } from '../../types/database'
+import type { Profile, Location } from '../../types/database'
+type UserRole = 'owner' | 'admin' | 'accountant' | 'cashier' | 'storekeeper'
 
 const roleConfig: Record<UserRole, { label: string; color: string; icon: any; description: string }> = {
   owner: {
@@ -36,6 +37,12 @@ const roleConfig: Record<UserRole, { label: string; color: string; icon: any; de
     icon: User,
     description: 'Process sales only'
   },
+  storekeeper: {
+    label: 'Storekeeper',
+    color: 'bg-teal-100 text-teal-700 border-teal-200',
+    icon: User,
+    description: 'Manage warehouse stock & transfers'
+  },
 }
 
 function UserModal({
@@ -56,7 +63,7 @@ function UserModal({
 
   const availableRoles: UserRole[] =
     currentUserRole === 'owner'
-      ? ['owner', 'admin', 'accountant', 'cashier']
+      ? ['owner', 'admin', 'accountant', 'cashier', 'storekeeper']
       : ['admin', 'accountant', 'cashier']
 
   const onSubmit = async () => {
@@ -64,7 +71,7 @@ function UserModal({
     if (!user && !email.trim()) { toast.error('Email is required'); return }
     if (!user && !password.trim()) { toast.error('Password is required for new users'); return }
     if (!user && password.trim().length < 6) { toast.error('Password must be at least 6 characters'); return }
-    const noBranchRoles = ['owner', 'accountant']
+    const noBranchRoles = ['owner', 'accountant', 'storekeeper']
     if (!noBranchRoles.includes(role) && !locationId) { toast.error('Select a branch for this user'); return }
 
     setIsSaving(true)
@@ -74,7 +81,7 @@ function UserModal({
         email: email.trim(),
         password,
         role,
-        location_id: (role === 'owner' || role === 'accountant') ? null : locationId,
+        location_id: ['owner', 'accountant', 'storekeeper'].includes(role) ? null : locationId,
       })
       onClose()
     } catch (err: any) {
@@ -214,7 +221,7 @@ function UserModal({
                 ))}
               </select>
               <p className="text-xs text-gray-400 mt-0.5">
-                This user will only see data from this branch
+                This user will only see data from their assigned branch
               </p>
             </div>
           )}
@@ -613,8 +620,13 @@ export default function UsersPage() {
                             <MapPin className="w-3.5 h-3.5 text-gray-400" />
                             {(user as any).location.name}
                           </div>
+                        ) : user.role === 'storekeeper' ? (
+                          <span className="text-xs text-teal-700 font-semibold
+                            bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+                            🏭 Warehouse
+                          </span>
                         ) : (
-                          <span className="text-xs text-yellow-600 font-semibold 
+                          <span className="text-xs text-yellow-600 font-semibold
                             bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-200">
                             All Branches
                           </span>

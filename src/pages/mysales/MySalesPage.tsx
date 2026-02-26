@@ -6,7 +6,8 @@ import { supabase } from '../../lib/supabase'
 import {
   Banknote, CreditCard, Smartphone, User, Search,
   RefreshCw, Printer, X, Loader2, CheckCircle,
-  Clock, TrendingUp, Receipt, AlertCircle, ArrowDownCircle
+  Clock, TrendingUp, Receipt, AlertCircle, ArrowDownCircle, Calendar,
+  DollarSign, AlertTriangle
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
@@ -51,7 +52,10 @@ function SalePaymentBadges({ sale }: { sale: any }) {
 interface Sale {
   id: string
   created_at: string
-  customer: { name: string } | null
+  discount_amount: number
+  customer_id: string | null
+  location_id: string | null
+  customer: { id: string; name: string; outstanding_balance: number } | null
   cashier: { full_name: string } | null
   payment_method: string
   total_amount: number
@@ -69,41 +73,56 @@ export default function MySalesPage() {
   const [isLoading, setIsLoading]       = useState(true)
   const [search, setSearch]             = useState('')
   const [filterMethod, setFilterMethod] = useState('all')
+  const [dateRange, setDateRange]         = useState<'today'|'week'|'month'|'all'>('today')
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [showReprint, setShowReprint]   = useState(false)
   const [showCollect, setShowCollect]   = useState(false)
   const [collectAmount, setCollectAmount] = useState('')
   const [collectNotes, setCollectNotes]   = useState('')
   const [isCollecting, setIsCollecting]   = useState(false)
+  const [customerBalance, setCustomerBalance] = useState(0)
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
 
   const fetchSales = useCallback(async () => {
     setIsLoading(true)
     try {
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
-
       const isCrossBranch = profile?.role === 'owner' || profile?.role === 'accountant'
+
+      // ── Compute start date based on dateRange ──
+      let startDate: string | null = null
+      const now = new Date()
+      if (dateRange === 'today') {
+        const d = new Date(now); d.setHours(0, 0, 0, 0)
+        startDate = d.toISOString()
+      } else if (dateRange === 'week') {
+        const d = new Date(now); d.setDate(d.getDate() - 6); d.setHours(0, 0, 0, 0)
+        startDate = d.toISOString()
+      } else if (dateRange === 'month') {
+        const d = new Date(now); d.setDate(1); d.setHours(0, 0, 0, 0)
+        startDate = d.toISOString()
+      }
+      // 'all' => startDate stays null — no date filter
 
       let q = supabase
         .from('sales')
         .select(`
-          id, created_at, total_amount, amount_paid, change_given, payment_method,
-          cashier_id,
-          customer:customers(name),
+          id, created_at, total_amount, discount_amount, amount_paid, change_given, payment_method,
+          cashier_id, customer_id, location_id,
+          customer:customers(id, name, outstanding_balance),
           cashier:profiles(full_name),
           sale_items(id, product_name, quantity, unit_price, total_price),
           sale_payments(method, amount)
         `)
-        .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false })
+        .limit(500)
+
+      if (startDate) q = q.gte('created_at', startDate)
 
       if (isCrossBranch) {
-        // Owner/accountant: see ALL sales across branches (or their selected branch via RLS)
-        // No cashier filter — they see everyone's sales
+        // Owner/accountant: see all sales (RLS handles branch filtering)
       } else {
-        // Cashier/admin: only see their own sales, limited to their shift
+        // Cashier/admin: only own sales
         q = q.eq('cashier_id', profile?.id)
-        if (openedAt) q = q.gte('created_at', openedAt)
       }
 
       const { data, error } = await q
@@ -117,12 +136,33 @@ export default function MySalesPage() {
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.id, openedAt])
+  }, [profile?.id, dateRange])
 
   useEffect(() => { fetchSales() }, [fetchSales])
+  useEffect(() => { fetchSales() }, [dateRange])
 
   // Real-time: refresh when new sales come in
   useRealtime(['sales', 'sale_payments'], fetchSales, [profile?.id])
+
+
+  // Fetch the customer's TOTAL outstanding balance (all sales combined)
+  const fetchCustomerBalance = async (customerId: string) => {
+    setIsLoadingBalance(true)
+    try {
+      const { data } = await supabase
+        .from('customers')
+        .select('outstanding_balance')
+        .eq('id', customerId)
+        .single()
+      const balance = data?.outstanding_balance || 0
+      setCustomerBalance(balance)
+      setCollectAmount(balance.toString())
+    } catch {
+      setCustomerBalance(0)
+    } finally {
+      setIsLoadingBalance(false)
+    }
+  }
 
   // Compute summary totals
   const summary = sales.reduce((acc, sale) => {
@@ -161,36 +201,51 @@ export default function MySalesPage() {
     return matchSearch && matchMethod
   })
 
-  // Collect payment handler
+  // Collect payment handler — works on customer TOTAL debt, not single sale
   const handleCollect = async () => {
-    if (!selectedSale?.customer) return
+    if (!selectedSale?.customer_id || !selectedSale?.customer) return
     const amount = parseFloat(collectAmount)
-    if (!amount || amount <= 0) { toast.error('Enter valid amount'); return }
+    if (!amount || amount <= 0)       { toast.error('Enter a valid amount'); return }
+    if (amount > customerBalance)     { toast.error(`Amount exceeds total balance of KES ${customerBalance.toLocaleString()}`); return }
 
     setIsCollecting(true)
     try {
-      // Insert payment record
-      await supabase.from('customer_payments').insert({
-        customer_id: (selectedSale as any).customer_id,
+      // 1. Record the payment
+      // location_id is NOT NULL — use the sale's branch or fallback to cashier's branch
+      const locationId = selectedSale.location_id || profile?.location_id
+      if (!locationId) { toast.error('Cannot determine branch location'); return }
+
+      const { error: payErr } = await supabase.from('customer_payments').insert({
+        customer_id: selectedSale.customer_id,
+        location_id: locationId,
         amount,
-        notes: collectNotes || `Payment for sale #${selectedSale.id.slice(0,8).toUpperCase()}`,
-        cashier_id: profile?.id,
+        notes: collectNotes || `Payment collected — ${selectedSale.customer.name}`,
       })
+      if (payErr) throw payErr
 
-      // Reduce outstanding balance
-      const { data: cust } = await supabase
-        .from('customers').select('outstanding_balance').eq('name', selectedSale.customer.name).single()
-      if (cust) {
-        await supabase.from('customers')
-          .update({ outstanding_balance: Math.max(0, cust.outstanding_balance - amount) })
-          .eq('name', selectedSale.customer.name)
-      }
+      // 2. Deduct from customer's outstanding_balance using customer ID (not name)
+      const newBalance = Math.max(0, customerBalance - amount)
+      const { error: updErr } = await supabase
+        .from('customers')
+        .update({ outstanding_balance: newBalance })
+        .eq('id', selectedSale.customer_id)
+      if (updErr) throw updErr
 
-      toast.success(`KES ${amount.toLocaleString()} collected from ${selectedSale.customer.name}`)
+      toast.success(
+        `✓ KES ${amount.toLocaleString()} collected from ${selectedSale.customer.name}` +
+        (newBalance > 0 ? ` · KES ${newBalance.toLocaleString()} still owing` : ' · Balance cleared!')
+      )
+
+      // 3. Close & reset
       setShowCollect(false)
+      setSelectedSale(null)
       setCollectAmount('')
       setCollectNotes('')
-      fetchSales()
+      setCustomerBalance(0)
+
+      // 4. Immediately refresh so all rows update
+      await fetchSales()
+
     } catch (err: any) {
       toast.error(err.message || 'Failed to collect payment')
     } finally {
@@ -317,20 +372,44 @@ export default function MySalesPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex gap-3 items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search customer name or receipt #" value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 bg-white" />
+      <div className="flex flex-col gap-3">
+        {/* Date range pills */}
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+          {([
+            { key: 'today',  label: 'Today' },
+            { key: 'week',   label: 'Last 7 Days' },
+            { key: 'month',  label: 'This Month' },
+            { key: 'all',    label: 'All Time' },
+          ] as const).map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => setDateRange(opt.key)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                dateRange === opt.key
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+              }`}>
+              {opt.label}
+            </button>
+          ))}
         </div>
-        <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 bg-white font-medium">
-          <option value="all">All Methods</option>
-          <option value="cash">Cash</option>
-          <option value="card">Card</option>
-          <option value="mobile_money">M-Pesa</option>
-          <option value="credit">Credit</option>
-        </select>
+        {/* Search + method filter */}
+        <div className="flex gap-3 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input type="text" placeholder="Search customer name or receipt #" value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 bg-white" />
+          </div>
+          <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 bg-white font-medium">
+            <option value="all">All Methods</option>
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="mobile_money">M-Pesa</option>
+            <option value="credit">Credit</option>
+          </select>
+        </div>
       </div>
 
       {/* Sales Table */}
@@ -338,7 +417,10 @@ export default function MySalesPage() {
         {/* Count bar */}
         <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
           <span className="text-xs font-semibold text-gray-500">
-            {filtered.length} sale{filtered.length !== 1 ? 's' : ''} shown · Today's shift only
+            {filtered.length} sale{filtered.length !== 1 ? 's' : ''} shown ·{' '}
+            <span className="font-semibold text-blue-600">
+              {dateRange === 'today' ? "Today" : dateRange === 'week' ? 'Last 7 days' : dateRange === 'month' ? 'This month' : 'All time'}
+            </span>
           </span>
           <span className="text-xs text-gray-400">
             Total: <strong className="text-gray-700">KES {filtered.reduce((s, sale) => s + sale.total_amount, 0).toLocaleString()}</strong>
@@ -360,13 +442,15 @@ export default function MySalesPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-gray-100">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Time</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Date & Time</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Receipt #</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Customer</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Cashier</th>
                 <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Items</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Method</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Discount</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">Balance Due</th>
                 <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-center">Actions</th>
               </tr>
             </thead>
@@ -377,8 +461,13 @@ export default function MySalesPage() {
                 const itemCount = sale.sale_items?.length || 0
                 return (
                   <tr key={sale.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
-                      {new Date(sale.created_at).toLocaleTimeString('en-KE', { hour:'2-digit', minute:'2-digit' })}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <p className="text-sm font-semibold text-gray-700">
+                        {new Date(sale.created_at).toLocaleDateString('en-KE', { day:'2-digit', month:'short', year:'numeric' })}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(sale.created_at).toLocaleTimeString('en-KE', { hour:'2-digit', minute:'2-digit' })}
+                      </p>
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg font-semibold">
@@ -404,8 +493,43 @@ export default function MySalesPage() {
                     <td className="px-4 py-3">
                       <SalePaymentBadges sale={sale} />
                     </td>
+                    <td className="px-4 py-3 text-right hidden lg:table-cell">
+                      {sale.discount_amount > 0
+                        ? <span className="text-orange-600 font-semibold text-sm">-KES {sale.discount_amount.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</span>
+                        : <span className="text-gray-300 text-xs">—</span>
+                      }
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <p className="font-bold text-gray-800">KES {sale.total_amount.toLocaleString('en-KE', { minimumFractionDigits: 2 })}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right hidden lg:table-cell">
+                      {(() => {
+                        // Credit portion of this specific sale
+                        const creditPortion = (sale.sale_payments || [])
+                          .filter((p: any) => p.method === 'credit')
+                          .reduce((s: number, p: any) => s + p.amount, 0)
+                        const fallbackCredit = sale.payment_method === 'credit' ? sale.total_amount : 0
+                        const due = creditPortion || fallbackCredit
+
+                        if (due <= 0) {
+                          // No credit on this sale — fully paid
+                          return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold"><CheckCircle className="w-3 h-3" />Paid</span>
+                        }
+
+                        // Has credit — check if customer has cleared their total balance
+                        const customerOwing = sale.customer?.outstanding_balance ?? due
+                        if (customerOwing <= 0) {
+                          // Customer paid off everything (may span multiple sales)
+                          return <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold"><CheckCircle className="w-3 h-3" />Paid</span>
+                        }
+
+                        // Still owes money
+                        return (
+                          <span className="text-red-600 font-bold text-sm">
+                            KES {customerOwing.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                          </span>
+                        )
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -415,14 +539,14 @@ export default function MySalesPage() {
                           className="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center transition-colors">
                           <Printer className="w-3.5 h-3.5" />
                         </button>
-                        {hasCredit && (
+                        {hasCredit && sale.customer_id && (sale.customer?.outstanding_balance ?? 1) > 0 && (
                           <button
                             onClick={() => {
                               setSelectedSale(sale)
-                              setCollectAmount(sale.total_amount.toString())
                               setShowCollect(true)
+                              fetchCustomerBalance(sale.customer_id!)
                             }}
-                            title="Collect debt"
+                            title="Collect total customer debt"
                             className="w-8 h-8 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center transition-colors">
                             <ArrowDownCircle className="w-3.5 h-3.5" />
                           </button>
@@ -437,39 +561,136 @@ export default function MySalesPage() {
         )}
       </div>
 
-      {/* Collect Debt Modal */}
+      {/* Collect Debt Modal — shows customer TOTAL balance, not single sale */}
       {showCollect && selectedSale && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+
+            {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-gray-800">Collect Payment</h3>
-                <p className="text-xs text-gray-400">Record cash received for credit sale</p>
+                <p className="text-xs text-gray-400">Clear customer outstanding balance</p>
               </div>
-              <button onClick={() => { setShowCollect(false); setSelectedSale(null) }}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={() => { setShowCollect(false); setSelectedSale(null); setCustomerBalance(0) }}>
+                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+              </button>
             </div>
+
             <div className="px-6 py-5 space-y-4">
-              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
-                <p className="text-xs text-orange-500 font-medium">Customer</p>
-                <p className="font-bold text-orange-800">{selectedSale.customer?.name}</p>
-                <p className="text-xs text-orange-500 mt-1">Sale: KES {selectedSale.total_amount.toLocaleString()}</p>
+
+              {/* Customer info + TOTAL balance */}
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-red-500 font-semibold uppercase tracking-wide">Customer</p>
+                    <p className="font-black text-red-800 text-lg mt-0.5">{selectedSale.customer?.name}</p>
+                  </div>
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
+                    <User className="w-5 h-5 text-red-600" />
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-red-200">
+                  <p className="text-xs text-red-500 font-medium">Total Outstanding Balance</p>
+                  {isLoadingBalance ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Loader2 className="w-4 h-4 animate-spin text-red-400" />
+                      <span className="text-sm text-red-400">Loading balance...</span>
+                    </div>
+                  ) : (
+                    <p className="text-2xl font-black text-red-700 mt-0.5">
+                      KES {customerBalance.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                    </p>
+                  )}
+                  <p className="text-xs text-red-400 mt-1">
+                    Cumulative debt across all credit sales
+                  </p>
+                </div>
               </div>
+
+              {/* This sale reference */}
+              <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-xs text-gray-500">Selected sale</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded font-semibold">
+                    #{selectedSale.id.slice(0,8).toUpperCase()}
+                  </span>
+                  <span className="text-xs font-semibold text-gray-700">
+                    KES {selectedSale.total_amount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Amount to collect */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Amount to Collect (KES)</label>
-                <input type="number" min="0" value={collectAmount} onChange={e => setCollectAmount(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-orange-300 rounded-xl text-xl font-bold outline-none focus:border-orange-500 text-right bg-orange-50" />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-gray-600">Amount to Collect (KES)</label>
+                  {customerBalance > 0 && (
+                    <button
+                      onClick={() => setCollectAmount(customerBalance.toString())}
+                      className="text-xs text-orange-600 font-semibold hover:underline">
+                      Full balance
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="number" min="0" max={customerBalance}
+                  value={collectAmount}
+                  onChange={e => setCollectAmount(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-orange-300 rounded-xl text-2xl font-black outline-none focus:border-orange-500 text-right bg-orange-50 text-orange-800"
+                />
+                {/* Remaining balance preview */}
+                {collectAmount && parseFloat(collectAmount) > 0 && (
+                  <div className={clsx(
+                    'mt-2 flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold',
+                    parseFloat(collectAmount) >= customerBalance
+                      ? 'bg-green-50 border border-green-200 text-green-700'
+                      : 'bg-orange-50 border border-orange-200 text-orange-700'
+                  )}>
+                    <span>
+                      {parseFloat(collectAmount) >= customerBalance ? '✓ Balance fully cleared' : 'Remaining after payment'}
+                    </span>
+                    {parseFloat(collectAmount) < customerBalance && (
+                      <span className="font-black">
+                        KES {Math.max(0, customerBalance - parseFloat(collectAmount)).toLocaleString('en-KE', { minimumFractionDigits: 0 })}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {parseFloat(collectAmount) > customerBalance && customerBalance > 0 && (
+                  <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                    <span className="text-xs text-red-600 font-semibold">Amount exceeds total balance</span>
+                  </div>
+                )}
               </div>
+
+              {/* Notes */}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Notes (optional)</label>
-                <input type="text" value={collectNotes} onChange={e => setCollectNotes(e.target.value)} placeholder="e.g. Partial payment"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 bg-gray-50" />
+                <input
+                  type="text" value={collectNotes}
+                  onChange={e => setCollectNotes(e.target.value)}
+                  placeholder="e.g. Partial payment, cash received..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-orange-400 bg-gray-50"
+                />
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => { setShowCollect(false); setSelectedSale(null) }}
-                  className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">Cancel</button>
-                <button onClick={handleCollect} disabled={isCollecting || !collectAmount}
-                  className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50">
-                  {isCollecting ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <><CheckCircle className="w-4 h-4" />Record Payment</>}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => { setShowCollect(false); setSelectedSale(null); setCustomerBalance(0) }}
+                  className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCollect}
+                  disabled={isCollecting || !collectAmount || parseFloat(collectAmount) <= 0 || parseFloat(collectAmount) > customerBalance || isLoadingBalance}
+                  className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isCollecting
+                    ? <><Loader2 className="w-4 h-4 animate-spin" />Recording...</>
+                    : <><DollarSign className="w-4 h-4" />Record Payment</>
+                  }
                 </button>
               </div>
             </div>

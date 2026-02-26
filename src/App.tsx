@@ -20,6 +20,7 @@ import ReportsPage     from './pages/reports/ReportsPage'
 import UsersPage       from './pages/users/UsersPage'
 import SettingsPage    from './pages/settings/SettingsPage'
 import AuditLogPage    from './pages/audit/AuditLogPage'
+import StorePage       from './pages/store/StorePage'
 
 // ── Protected route wrapper ──────────────────────────────
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -146,6 +147,7 @@ export default function App() {
           <Route path="users"        element={<UsersPage />} />
           <Route path="settings"     element={<SettingsPage />} />
           <Route path="audit"        element={<AuditLogPage />} />
+          <Route path="store"        element={<StorePage />} />
         </Route>
 
         {/* Catch-all */}

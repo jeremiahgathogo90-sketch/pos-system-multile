@@ -377,67 +377,217 @@ function RegisterModal({ mode, onComplete }: { mode: 'open' | 'close'; onComplet
 
 // ── Thermal Receipt ──────────────────────────────────────
 interface ReceiptData {
-  saleId:string;storeName:string;branchName:string;cashierName:string;date:string
+  saleId:string;storeName:string;storeAddress:string;storePhone:string
+  branchName:string;cashierName:string;date:string
   customer:string|null;taxRate:number
   items:{name:string;qty:number;price:number;total:number}[]
   subtotal:number;tax:number;discount:number;total:number
   payments:SplitPaymentEntry[];change:number
+  receiptFooter:string
 }
 
 function ThermalReceipt({data,onClose}:{data:ReceiptData;onClose:()=>void}) {
   const receiptRef = useRef<HTMLDivElement>(null)
-  const getLabel = (id:string)=>paymentMethods.find(m=>m.id===id)?.label||id
+  const getLabel = (id:string) => paymentMethods.find(m=>m.id===id)?.label || id
+
   const handlePrint = () => {
-    const content=receiptRef.current?.innerHTML
-    if(!content)return
-    const w=window.open('','_blank','width=400,height=700')
-    if(!w){toast.error('Allow popups to print');return}
+    const content = receiptRef.current?.innerHTML
+    if (!content) return
+    const w = window.open('', '_blank', 'width=400,height=750')
+    if (!w) { toast.error('Allow popups to print'); return }
     w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title>
-    <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Courier New',monospace;font-size:12px;width:80mm;margin:0 auto;padding:4mm}.c{text-align:center}.b{font-weight:bold}.lg{font-size:15px}.dash{border-top:1px dashed #555;margin:5px 0}.solid{border-top:1px solid #000;margin:5px 0}.row{display:flex;justify-content:space-between;margin:2px 0}.item{margin:3px 0}.iname{font-weight:bold}.idet{padding-left:6px;display:flex;justify-content:space-between;color:#333}.trow{display:flex;justify-content:space-between;font-size:14px;font-weight:bold;margin:3px 0}.prow{display:flex;justify-content:space-between;margin:2px 0;font-size:11px}@media print{body{width:80mm}@page{margin:0;size:80mm auto}}</style>
-    </head><body>${content}<script>window.onload=function(){window.print();setTimeout(function(){window.close()},500)}<\/script></body></html>`)
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box }
+      body { font-family:'Courier New',monospace; font-size:12px; width:80mm; margin:0 auto; padding:5mm }
+      .center { text-align:center }
+      .bold { font-weight:bold }
+      .large { font-size:18px; font-weight:bold }
+      .medium { font-size:14px }
+      .small { font-size:10px; color:#555 }
+      .dash { border-top:1px dashed #777; margin:6px 0 }
+      .solid { border-top:2px solid #000; margin:6px 0 }
+      .row { display:flex; justify-content:space-between; margin:3px 0; font-size:12px }
+      .row-label { color:#333 }
+      .thead { display:flex; justify-content:space-between; font-weight:bold; margin:3px 0; font-size:11px; border-bottom:1px solid #ccc; padding-bottom:3px }
+      .thead .item-name { flex:2 }
+      .thead .item-qty  { flex:0.5; text-align:center }
+      .thead .item-price{ flex:1.2; text-align:right }
+      .thead .item-total{ flex:1.2; text-align:right }
+      .trow { display:flex; justify-content:space-between; margin:4px 0; font-size:12px }
+      .trow .item-name  { flex:2; font-weight:bold }
+      .trow .item-qty   { flex:0.5; text-align:center }
+      .trow .item-price { flex:1.2; text-align:right }
+      .trow .item-total { flex:1.2; text-align:right; font-weight:bold }
+      .total-row { display:flex; justify-content:space-between; font-size:16px; font-weight:bold; margin:4px 0 }
+      .payment-section { margin:4px 0 }
+      .payment-label { font-weight:bold; font-size:12px; margin-bottom:3px }
+      .payment-row { display:flex; justify-content:space-between; font-size:12px; margin:2px 0 }
+      .footer-line { text-align:center; font-size:11px; margin:2px 0 }
+      .receipt-id { text-align:center; font-size:11px; margin-top:4px; color:#444 }
+      @media print { body{width:80mm} @page{margin:0;size:80mm auto} }
+    </style>
+    </head><body>
+    ${content}
+    <script>window.onload=function(){window.print();setTimeout(function(){window.close()},600)}<\/script>
+    </body></html>`)
     w.document.close()
   }
+
+  const fmt = (n:number) => `KES ${n.toLocaleString('en-KE',{minimumFractionDigits:2})}`
+  const shortId = `SALE-${data.saleId.replace(/-/g,'').toUpperCase().slice(0,16)}`
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[92vh]">
+
+        {/* Modal header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center"><CheckCircle className="w-5 h-5 text-green-600"/></div>
-            <div><p className="font-bold text-gray-800">Sale Complete!</p><p className="text-xs text-gray-400">Receipt ready</p></div>
+            <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-green-600"/>
+            </div>
+            <div>
+              <p className="font-bold text-gray-800">Sale Complete!</p>
+              <p className="text-xs text-gray-400">Receipt ready to print</p>
+            </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"><X className="w-4 h-4"/></button>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+            <X className="w-4 h-4"/>
+          </button>
         </div>
+
+        {/* Receipt preview */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 font-mono text-xs leading-relaxed">
+          <div className="bg-white border border-gray-200 rounded-xl p-4 font-mono text-xs shadow-inner">
             <div ref={receiptRef}>
-              <div className="c b lg">{data.storeName}</div>
-              <div className="c">{data.branchName}</div>
-              <div className="dash"/>
-              <div className="row"><span>Date:</span><span>{data.date}</span></div>
-              <div className="row"><span>Cashier:</span><span>{data.cashierName}</span></div>
-              {data.customer&&<div className="row"><span>Customer:</span><span>{data.customer}</span></div>}
-              <div className="row"><span>Receipt#:</span><span>{data.saleId.slice(0,8).toUpperCase()}</span></div>
-              <div className="dash"/>
-              <div className="b" style={{marginBottom:'4px'}}>ITEMS</div>
-              {data.items.map((item,i)=>(<div key={i} className="item"><div className="iname">{item.name}</div><div className="idet"><span>{item.qty}×{item.price.toLocaleString()}</span><span className="b">{item.total.toLocaleString()}</span></div></div>))}
-              <div className="dash"/>
-              <div className="row"><span>Subtotal</span><span>KES {data.subtotal.toLocaleString()}</span></div>
-              {data.discount>0&&<div className="row"><span>Discount</span><span>-KES {data.discount.toLocaleString()}</span></div>}
-              {data.tax>0&&<div className="row"><span>Tax ({Math.round(data.taxRate*100)}%)</span><span>KES {data.tax.toLocaleString()}</span></div>}
-              <div className="solid"/>
-              <div className="trow"><span>TOTAL</span><span>KES {data.total.toLocaleString()}</span></div>
-              <div className="dash"/>
-              <div className="b" style={{marginBottom:'3px'}}>PAYMENT</div>
-              {data.payments.map((p,i)=><div key={i} className="prow"><span>{getLabel(p.method)}</span><span>KES {p.amount.toLocaleString()}</span></div>)}
-              {data.change>0&&<div className="prow b"><span>Change</span><span>KES {data.change.toLocaleString()}</span></div>}
-              <div className="dash"/>
-              <div className="c" style={{fontSize:'11px'}}><div>Thank you for your purchase!</div><div style={{fontSize:'9px',color:'#777',marginTop:'4px'}}>Powered by POS System</div></div>
+
+              {/* ── Header ── */}
+              <div style={{textAlign:'center',marginBottom:'2px'}}>
+                <div style={{fontSize:'20px',fontWeight:'bold'}}>{data.storeName}</div>
+                {data.storeAddress && <div style={{fontSize:'11px',color:'#444',marginTop:'2px'}}>{data.storeAddress}</div>}
+                {data.storePhone   && <div style={{fontSize:'11px',color:'#444'}}>Tel: {data.storePhone}</div>}
+              </div>
+
+              {/* ── Divider ── */}
+              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+
+              {/* ── Sale info ── */}
+              <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                <span style={{color:'#333'}}>Receipt #:</span>
+                <span style={{fontWeight:'bold'}}>{shortId}</span>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                <span style={{color:'#333'}}>Date:</span>
+                <span>{data.date}</span>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                <span style={{color:'#333'}}>Cashier:</span>
+                <span>{data.cashierName}</span>
+              </div>
+              {data.customer && (
+                <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                  <span style={{color:'#333'}}>Customer:</span>
+                  <span>{data.customer}</span>
+                </div>
+              )}
+
+              {/* ── Divider ── */}
+              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+
+              {/* ── Items table header ── */}
+              <div style={{display:'flex',justifyContent:'space-between',fontWeight:'bold',fontSize:'11px',borderBottom:'1px solid #ccc',paddingBottom:'3px',marginBottom:'4px'}}>
+                <span style={{flex:2}}>Item</span>
+                <span style={{flex:'0 0 24px',textAlign:'center'}}>Qty</span>
+                <span style={{flex:1.2,textAlign:'right'}}>Price</span>
+                <span style={{flex:1.2,textAlign:'right'}}>Total</span>
+              </div>
+
+              {/* ── Items ── */}
+              {data.items.map((item,i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',margin:'4px 0',fontSize:'12px'}}>
+                  <span style={{flex:2,fontWeight:'bold'}}>{item.name}</span>
+                  <span style={{flex:'0 0 24px',textAlign:'center'}}>{item.qty}</span>
+                  <span style={{flex:1.2,textAlign:'right'}}>KES {item.price.toLocaleString('en-KE',{minimumFractionDigits:2})}</span>
+                  <span style={{flex:1.2,textAlign:'right',fontWeight:'bold'}}>KES {item.total.toLocaleString('en-KE',{minimumFractionDigits:2})}</span>
+                </div>
+              ))}
+
+              {/* ── Divider ── */}
+              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+
+              {/* ── Subtotal / discount / tax ── */}
+              <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                <span>Subtotal:</span>
+                <span>{fmt(data.subtotal)}</span>
+              </div>
+              {data.discount > 0 && (
+                <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                  <span>Discount:</span>
+                  <span>-{fmt(data.discount)}</span>
+                </div>
+              )}
+              {data.tax > 0 && (
+                <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                  <span>Tax ({Math.round(data.taxRate*100)}%):</span>
+                  <span>{fmt(data.tax)}</span>
+                </div>
+              )}
+
+              {/* ── Solid line + TOTAL ── */}
+              <div style={{borderTop:'2px solid #000',margin:'6px 0'}}/>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:'16px',fontWeight:'bold',margin:'4px 0'}}>
+                <span>TOTAL:</span>
+                <span>{fmt(data.total)}</span>
+              </div>
+
+              {/* ── Divider ── */}
+              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+
+              {/* ── Payment method ── */}
+              <div style={{fontWeight:'bold',fontSize:'12px',marginBottom:'4px'}}>PAYMENT METHOD:</div>
+              {data.payments.map((p,i) => (
+                <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:'12px',margin:'3px 0'}}>
+                  <span>{getLabel(p.method)}:</span>
+                  <span>{fmt(p.amount)}</span>
+                </div>
+              ))}
+              {data.change > 0 && (
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px',margin:'3px 0',fontWeight:'bold'}}>
+                  <span>Change:</span>
+                  <span>{fmt(data.change)}</span>
+                </div>
+              )}
+
+              {/* ── Divider ── */}
+              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+
+              {/* ── Footer messages ── */}
+              <div style={{textAlign:'center',fontSize:'12px',fontWeight:'bold',margin:'3px 0'}}>
+                {data.receiptFooter || 'Thank you for your business!'}
+              </div>
+              <div style={{textAlign:'center',fontSize:'11px',margin:'2px 0'}}>Please come again</div>
+              <div style={{textAlign:'center',fontSize:'11px',margin:'2px 0'}}>We value our customers</div>
+
+              {/* ── Receipt ID at bottom ── */}
+              <div style={{textAlign:'center',fontSize:'11px',marginTop:'6px',color:'#444'}}>
+                {shortId}
+              </div>
+
             </div>
           </div>
         </div>
+
+        {/* Actions */}
         <div className="px-5 py-4 border-t border-gray-100 flex gap-3 shrink-0">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">Skip</button>
-          <button onClick={handlePrint} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2"><Printer className="w-4 h-4"/>Print Receipt</button>
+          <button onClick={onClose}
+            className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">
+            Skip
+          </button>
+          <button onClick={handlePrint}
+            className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2">
+            <Printer className="w-4 h-4"/>Print Receipt
+          </button>
         </div>
       </div>
     </div>
@@ -571,7 +721,9 @@ export default function POSPage() {
   const [showRecent, setShowRecent]               = useState(false)
   const [showCreateCustomer, setShowCreateCustomer] = useState(false)
   const [showCloseRegister, setShowCloseRegister] = useState(false)
+  const [mobileTab, setMobileTab] = useState<'cart'|'products'>('products')
   const [receiptData, setReceiptData]             = useState<ReceiptData | null>(null)
+  const [storeInfo, setStoreInfo] = useState({ address: '', phone: '', footer: 'Thank you for your business!' })
   const [suspendedOrders, setSuspendedOrders]     = useState<any[]>([])
   const [recentSales, setRecentSales]             = useState<any[]>([])
   const [newCustomerName, setNewCustomerName]     = useState('')
@@ -589,6 +741,15 @@ export default function POSPage() {
     fetchCategories()
     fetchSuspended()
     fetchTaxRate(profile?.location_id || null)
+    // Fetch store info for receipt
+    supabase.from('store_settings').select('store_name,store_address,store_phone,receipt_footer').limit(1).single()
+      .then(({ data }) => {
+        if (data) setStoreInfo({
+          address: data.store_address || '',
+          phone:   data.store_phone   || '',
+          footer:  data.receipt_footer || 'Thank you for your business!',
+        })
+      })
   }, [profile?.location_id])
 
   // Close dropdowns on outside click
@@ -684,6 +845,7 @@ export default function POSPage() {
     setProductQuery('')
     setProductResults([])
     setShowProductDrop(false)
+    setMobileTab('cart')
   }
 
   // Grid click also adds product
@@ -695,6 +857,7 @@ export default function POSPage() {
       quantity: 1, total_price: product.selling_price, stock_quantity: product.stock_quantity,
     })
     toast.success(`Added ${product.name}`, { duration: 600 })
+    setMobileTab('cart')
   }
 
   const handleQtyChange = (productId: string, newQty: number) => {
@@ -790,13 +953,17 @@ export default function POSPage() {
     }
 
     const receipt: ReceiptData = {
-      saleId: sale.id, storeName: 'My Shop',
-      branchName: profile?.location?.name || 'Main Branch',
-      cashierName: profile?.full_name || 'Cashier',
+      saleId: sale.id,
+      storeName:    profile?.location?.name || 'My Shop',
+      storeAddress: storeInfo.address,
+      storePhone:   storeInfo.phone,
+      branchName:   profile?.location?.name || 'Main Branch',
+      cashierName:  profile?.full_name || 'Cashier',
       date: new Date().toLocaleString('en-KE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
       customer: selectedCustomer?.name || null, taxRate,
       items: cart.map(i => ({ name: i.product_name, qty: i.quantity, price: i.unit_price, total: i.total_price })),
       subtotal, tax, discount, total, payments, change,
+      receiptFooter: storeInfo.footer,
     }
 
     clearCart(); setShowPayModal(false); setReceiptData(receipt); fetchProducts()
@@ -858,7 +1025,7 @@ export default function POSPage() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ── LEFT: Cart ── */}
-        <div className="w-[58%] flex flex-col bg-white border-r border-gray-200">
+        <div className={`${mobileTab === "cart" ? "flex" : "hidden"} md:flex w-full md:w-[58%] flex-col bg-white border-r border-gray-200`}>
 
           {/* ── Customer Autocomplete ── */}
           <div className="px-3 pt-2 pb-1.5 border-b border-gray-100">
@@ -1133,7 +1300,7 @@ export default function POSPage() {
         </div>
 
         {/* ── RIGHT: Product Grid ── */}
-        <div className="flex-1 flex flex-col bg-gray-50">
+        <div className={`${mobileTab === "products" ? "flex" : "hidden"} md:flex flex-1 flex-col bg-gray-50`}>
           <div className="px-3 pt-3 pb-2">
             <button onClick={()=>setSelectedCategory('all')}
               className={clsx('w-full py-2 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2',
@@ -1173,6 +1340,38 @@ export default function POSPage() {
             )}
           </div>
         </div>
+
+      {/* ── Mobile Tab Bar (shown only on small screens) ── */}
+      <div className="md:hidden flex border-t-2 border-gray-200 bg-white shrink-0 z-20">
+        <button
+          onClick={() => setMobileTab('products')}
+          className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 text-xs font-bold transition-colors ${
+            mobileTab === 'products'
+              ? 'text-blue-600 bg-blue-50 border-t-2 border-blue-600 -mt-0.5'
+              : 'text-gray-400 hover:text-gray-600'
+          }`}>
+          <Package className="w-5 h-5"/>
+          <span>Products</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('cart')}
+          className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 text-xs font-bold transition-colors relative ${
+            mobileTab === 'cart'
+              ? 'text-blue-600 bg-blue-50 border-t-2 border-blue-600 -mt-0.5'
+              : 'text-gray-400 hover:text-gray-600'
+          }`}>
+          <div className="relative">
+            <Receipt className="w-5 h-5"/>
+            {cart.length > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-black leading-none">
+                {cart.length}
+              </span>
+            )}
+          </div>
+          <span>Cart{cart.length > 0 ? ` (${cart.length})` : ''}</span>
+        </button>
+      </div>
+
       </div>
 
       {/* MODALS */}

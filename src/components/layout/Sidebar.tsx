@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 import {
   LayoutDashboard, ShoppingCart, Package, Users, Truck,
   ClipboardList, BarChart3, Settings, LogOut, Receipt,
-  UserCog, Store, ChevronRight, Shield, Building2, ChevronDown,
+  UserCog, Store, ChevronRight, Shield, Building2, ChevronDown, Warehouse,
   CheckCircle
 } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -24,6 +24,7 @@ const navItems = [
   { label: 'Users',          to: '/users',     icon: UserCog,         roles: ['owner','admin']                        },
   { label: 'Settings',       to: '/settings',  icon: Settings,        roles: ['owner','admin']                        },
   { label: 'Audit Log',       to: '/audit',     icon: Shield,          roles: ['owner','accountant']                   },
+  { label: 'Store / Warehouse', to: '/store',    icon: Warehouse,       roles: ['owner','storekeeper']                  },
 ]
 
 interface Location { id: string; name: string; is_active: boolean }
@@ -73,17 +74,17 @@ export default function Sidebar() {
     : (profile?.location?.name || 'My Branch')
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col h-full shrink-0">
+    <aside className="w-64 bg-white text-gray-800 flex flex-col h-full shrink-0 border-r border-gray-200">
 
       {/* Brand */}
-      <div className="px-5 py-4 border-b border-gray-800">
+      <div className="px-5 py-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
             <Store className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="font-black text-white text-base leading-tight truncate">My Shop</p>
-            <p className="text-xs text-gray-400 truncate">{displayBranch}</p>
+            <p className="font-black text-gray-900 text-base leading-tight truncate">My Shop</p>
+            <p className="text-xs text-gray-500 truncate">{displayBranch}</p>
           </div>
         </div>
       </div>
@@ -91,28 +92,28 @@ export default function Sidebar() {
       {/* ── Branch Switcher (owner + accountant only) ── */}
       {isCrossBranch && (
         <div className="px-3 pt-3 pb-1">
-          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1.5 px-1">Branch</p>
+          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wide mb-1.5 px-1">Branch</p>
           <div className="relative">
             <button
               onClick={() => setShowBranchPicker(!showBranchPicker)}
-              className="w-full flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl px-3 py-2 transition-colors">
+              className="w-full flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl px-3 py-2 transition-colors">
               <Building2 className="w-4 h-4 text-blue-400 shrink-0" />
-              <span className="flex-1 text-sm font-semibold text-white truncate text-left">
+              <span className="flex-1 text-sm font-semibold text-gray-800 truncate text-left">
                 {selectedBranchName}
               </span>
               <ChevronDown className={clsx('w-4 h-4 text-gray-400 shrink-0 transition-transform', showBranchPicker && 'rotate-180')} />
             </button>
 
             {showBranchPicker && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden">
                 {/* All Branches option */}
                 <button
                   onClick={() => handleSelectBranch(null, 'All Branches')}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-700 transition-colors border-b border-gray-700">
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-200">
                   <div className="w-7 h-7 bg-blue-600/20 rounded-lg flex items-center justify-center shrink-0">
                     <Building2 className="w-3.5 h-3.5 text-blue-400" />
                   </div>
-                  <span className="flex-1 text-sm font-semibold text-white text-left">All Branches</span>
+                  <span className="flex-1 text-sm font-semibold text-gray-800 text-left">All Branches</span>
                   {selectedBranchId === null && <CheckCircle className="w-4 h-4 text-blue-400 shrink-0" />}
                 </button>
 
@@ -122,16 +123,16 @@ export default function Sidebar() {
                     key={loc.id}
                     onClick={() => handleSelectBranch(loc.id, loc.name)}
                     className={clsx(
-                      'w-full flex items-center gap-2.5 px-3 py-2.5 transition-colors border-b border-gray-700/50 last:border-0',
-                      loc.is_active ? 'hover:bg-gray-700' : 'opacity-40 cursor-not-allowed'
+                      'w-full flex items-center gap-2.5 px-3 py-2.5 transition-colors border-b border-gray-100 last:border-0',
+                      loc.is_active ? 'hover:bg-gray-50' : 'opacity-40 cursor-not-allowed'
                     )}
                     disabled={!loc.is_active}>
-                    <div className="w-7 h-7 bg-gray-700 rounded-lg flex items-center justify-center text-gray-300 font-bold text-xs shrink-0">
+                    <div className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600 font-bold text-xs shrink-0">
                       {loc.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{loc.name}</p>
-                      {!loc.is_active && <p className="text-xs text-gray-500">Inactive</p>}
+                      <p className="text-sm font-medium text-gray-800 truncate">{loc.name}</p>
+                      {!loc.is_active && <p className="text-xs text-gray-400">Inactive</p>}
                     </div>
                     {selectedBranchId === loc.id && <CheckCircle className="w-4 h-4 text-blue-400 shrink-0" />}
                   </button>
@@ -143,14 +144,14 @@ export default function Sidebar() {
       )}
 
       {/* User pill */}
-      <div className="px-4 py-3 border-b border-gray-800">
-        <div className="flex items-center gap-3 bg-gray-800 rounded-xl px-3 py-2.5">
+      <div className="px-4 py-3 border-b border-gray-200">
+        <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5">
           <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
             {profile?.full_name?.charAt(0).toUpperCase() || '?'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-white truncate leading-tight">{profile?.full_name || 'User'}</p>
-            <p className="text-xs text-gray-400 capitalize">{userRole}</p>
+            <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{profile?.full_name || 'User'}</p>
+            <p className="text-xs text-gray-500 capitalize">{userRole}</p>
           </div>
           <div className="w-2 h-2 bg-green-400 rounded-full shrink-0" title="Online" />
         </div>
@@ -166,17 +167,17 @@ export default function Sidebar() {
               clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group',
                 isActive
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40'
-                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-200'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               )
             }
           >
             {({ isActive }) => (
               <>
                 <item.icon className={clsx('w-4 h-4 shrink-0 transition-colors',
-                  isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-300')} />
+                  isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-700')} />
                 <span className="flex-1 truncate">{item.label}</span>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-blue-300 shrink-0" />}
+                {isActive && <ChevronRight className="w-3.5 h-3.5 text-blue-200 shrink-0" />}
               </>
             )}
           </NavLink>
@@ -184,13 +185,13 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div className="px-3 py-4 border-t border-gray-800">
+      <div className="px-3 py-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm
-            font-medium text-gray-400 hover:bg-red-900/40 hover:text-red-400
+            font-medium text-gray-900 hover:bg-red-50 hover:text-red-600
             transition-all duration-150 group">
-          <LogOut className="w-4 h-4 shrink-0 text-gray-500 group-hover:text-red-400 transition-colors" />
+          <LogOut className="w-4 h-4 shrink-0 text-gray-900 group-hover:text-red-600 transition-colors" />
           <span>Sign Out</span>
         </button>
       </div>
