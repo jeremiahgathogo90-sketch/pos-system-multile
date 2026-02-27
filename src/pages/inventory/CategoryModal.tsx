@@ -28,7 +28,7 @@ export default function CategoryModal({ categories, onAdd, onClose }: Props) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-bold text-gray-800">Manage Categories</h3>
-          <button onClick={onClose}>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center" aria-label="Close category modal">
             <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
           </button>
         </div>

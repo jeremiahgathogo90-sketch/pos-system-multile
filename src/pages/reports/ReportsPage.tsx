@@ -9,7 +9,7 @@ import {
 import {
   TrendingUp, ShoppingCart, Users, Package,
   Download, RefreshCw, Calendar, Building2,
-  CreditCard, Banknote, Smartphone, DollarSign
+  CreditCard, DollarSign
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import Papa from 'papaparse'

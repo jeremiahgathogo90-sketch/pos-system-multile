@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, Fragment } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore'
 import { useRealtime } from '../../hooks/useRealtime'
 import {
   Shield, Search, RefreshCw, Loader2,

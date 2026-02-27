@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
 import {
-  Plus, Search, Edit2, Trash2, User, Phone,
+  Plus, Search, Edit2, Trash2, Phone,
   Mail, CreditCard, AlertCircle, X, Loader2,
   DollarSign, Users, TrendingDown, RefreshCw
 } from 'lucide-react'

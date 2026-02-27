@@ -7,7 +7,7 @@ import ImportModal from './ImportModal'
 import {
   Plus, Search, Download, Upload, Tag,
   Edit2, Trash2, AlertTriangle, Package,
-  TrendingUp, DollarSign, Filter, RefreshCw,
+  TrendingUp, DollarSign, RefreshCw,
   ChevronUp, ChevronDown
 } from 'lucide-react'
 import { clsx } from 'clsx'
