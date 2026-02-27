@@ -19,7 +19,7 @@ export default function ProtectedRoute() {
             Your account has been deactivated. Contact your administrator.
           </p>
           <button
-            onClick={() => useAuthStore.getState().signOut()}
+            onClick={() => useAuthStore.getState().logout()}
             className="text-sm text-red-500 hover:text-red-600 font-medium"
           >
             Sign out

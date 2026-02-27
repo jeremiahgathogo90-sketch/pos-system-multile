@@ -70,7 +70,7 @@ interface ShiftSummary {
 
 function RegisterModal({ mode, onComplete }: { mode: 'open' | 'close'; onComplete: () => void }) {
   const { profile } = useAuthStore()
-  const { registerId, openingAmount, openedAt, setRegister, closeRegister } = useRegisterStore()
+  const { registerId, openingAmount, openedAt, setRegister, } = useRegisterStore()
   const [amount, setAmount]         = useState('')
   const [notes, setNotes]           = useState('')
   const [isLoading, setIsLoading]   = useState(false)
@@ -201,6 +201,8 @@ function RegisterModal({ mode, onComplete }: { mode: 'open' | 'close'; onComplet
               </div>
             </div>
             <button onClick={onComplete}
+              title="Dismiss shift summary and return to dashboard"
+              aria-label="Dismiss shift summary and return to dashboard"
               className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
               <X className="w-4 h-4 text-gray-500" />
             </button>
@@ -399,31 +401,29 @@ function ThermalReceipt({data,onClose}:{data:ReceiptData;onClose:()=>void}) {
     <style>
       * { margin:0; padding:0; box-sizing:border-box }
       body { font-family:'Courier New',monospace; font-size:12px; width:80mm; margin:0 auto; padding:5mm }
-      .center { text-align:center }
-      .bold { font-weight:bold }
-      .large { font-size:18px; font-weight:bold }
-      .medium { font-size:14px }
-      .small { font-size:10px; color:#555 }
-      .dash { border-top:1px dashed #777; margin:6px 0 }
-      .solid { border-top:2px solid #000; margin:6px 0 }
-      .row { display:flex; justify-content:space-between; margin:3px 0; font-size:12px }
-      .row-label { color:#333 }
-      .thead { display:flex; justify-content:space-between; font-weight:bold; margin:3px 0; font-size:11px; border-bottom:1px solid #ccc; padding-bottom:3px }
-      .thead .item-name { flex:2 }
-      .thead .item-qty  { flex:0.5; text-align:center }
-      .thead .item-price{ flex:1.2; text-align:right }
-      .thead .item-total{ flex:1.2; text-align:right }
-      .trow { display:flex; justify-content:space-between; margin:4px 0; font-size:12px }
-      .trow .item-name  { flex:2; font-weight:bold }
-      .trow .item-qty   { flex:0.5; text-align:center }
-      .trow .item-price { flex:1.2; text-align:right }
-      .trow .item-total { flex:1.2; text-align:right; font-weight:bold }
-      .total-row { display:flex; justify-content:space-between; font-size:16px; font-weight:bold; margin:4px 0 }
-      .payment-section { margin:4px 0 }
-      .payment-label { font-weight:bold; font-size:12px; margin-bottom:3px }
-      .payment-row { display:flex; justify-content:space-between; font-size:12px; margin:2px 0 }
-      .footer-line { text-align:center; font-size:11px; margin:2px 0 }
-      .receipt-id { text-align:center; font-size:11px; margin-top:4px; color:#444 }
+      .receipt-header { text-align:center; margin-bottom:2px }
+      .receipt-store-name { font-size:20px; font-weight:bold }
+      .receipt-store-info { font-size:11px; color:#444; margin-top:2px }
+      .receipt-divider { border-top:1px dashed #777; margin:6px 0 }
+      .receipt-divider-solid { border-top:2px solid #000; margin:6px 0 }
+      .receipt-row { display:flex; justify-content:space-between; margin:3px 0 }
+      .receipt-row-label { color:#333 }
+      .receipt-items-header { display:flex; justify-content:space-between; font-weight:bold; font-size:11px; border-bottom:1px solid #ccc; padding-bottom:3px; margin-bottom:4px }
+      .receipt-items-header .item-name { flex:2 }
+      .receipt-items-header .item-qty { flex:0 0 24px; text-align:center }
+      .receipt-items-header .item-price { flex:1.2; text-align:right }
+      .receipt-items-header .item-total { flex:1.2; text-align:right }
+      .receipt-item { display:flex; justify-content:space-between; margin:4px 0; font-size:12px }
+      .receipt-item .item-name { flex:2; font-weight:bold }
+      .receipt-item .item-qty { flex:0 0 24px; text-align:center }
+      .receipt-item .item-price { flex:1.2; text-align:right }
+      .receipt-item .item-total { flex:1.2; text-align:right; font-weight:bold }
+      .receipt-total { display:flex; justify-content:space-between; font-size:16px; font-weight:bold; margin:4px 0 }
+      .receipt-payment-label { font-weight:bold; font-size:12px; margin-bottom:3px }
+      .receipt-payment-row { display:flex; justify-content:space-between; font-size:12px; margin:2px 0 }
+      .receipt-footer { text-align:center; font-size:12px; font-weight:bold; margin:3px 0 }
+      .receipt-footer-line { text-align:center; font-size:11px; margin:2px 0 }
+      .receipt-id { text-align:center; font-size:11px; margin-top:6px; color:#444 }
       @media print { body{width:80mm} @page{margin:0;size:80mm auto} }
     </style>
     </head><body>
@@ -452,7 +452,9 @@ function ThermalReceipt({data,onClose}:{data:ReceiptData;onClose:()=>void}) {
             </div>
           </div>
           <button onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+            aria-label="Close receipt modal"
+            title="Close">
             <X className="w-4 h-4"/>
           </button>
         </div>
@@ -463,114 +465,114 @@ function ThermalReceipt({data,onClose}:{data:ReceiptData;onClose:()=>void}) {
             <div ref={receiptRef}>
 
               {/* ── Header ── */}
-              <div style={{textAlign:'center',marginBottom:'2px'}}>
-                <div style={{fontSize:'20px',fontWeight:'bold'}}>{data.storeName}</div>
-                {data.storeAddress && <div style={{fontSize:'11px',color:'#444',marginTop:'2px'}}>{data.storeAddress}</div>}
-                {data.storePhone   && <div style={{fontSize:'11px',color:'#444'}}>Tel: {data.storePhone}</div>}
+              <div className="text-center mb-0.5">
+                <div className="text-xl font-bold">{data.storeName}</div>
+                {data.storeAddress && <div className="text-xs text-gray-600 mt-0.5">{data.storeAddress}</div>}
+                {data.storePhone   && <div className="text-xs text-gray-600">Tel: {data.storePhone}</div>}
               </div>
 
               {/* ── Divider ── */}
-              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+              <div className="receipt-divider"/>
 
               {/* ── Sale info ── */}
-              <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
-                <span style={{color:'#333'}}>Receipt #:</span>
-                <span style={{fontWeight:'bold'}}>{shortId}</span>
-              </div>
-              <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
-                <span style={{color:'#333'}}>Date:</span>
+              <div className="receipt-row">
+                <span className="receipt-row-label">Receipt #:</span>
+                <span className="font-bold">{shortId}</span>
+              </div> 
+              <div className="receipt-row">
+                <span className="receipt-row-label">Date:</span>
                 <span>{data.date}</span>
               </div>
-              <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
-                <span style={{color:'#333'}}>Cashier:</span>
+              <div className="receipt-row">
+                <span className="receipt-row-label">Cashier:</span>
                 <span>{data.cashierName}</span>
               </div>
               {data.customer && (
-                <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
-                  <span style={{color:'#333'}}>Customer:</span>
+                <div className="receipt-row">
+                  <span className="receipt-row-label">Customer:</span>
                   <span>{data.customer}</span>
                 </div>
               )}
 
               {/* ── Divider ── */}
-              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+              <div className="receipt-divider"/>
 
               {/* ── Items table header ── */}
-              <div style={{display:'flex',justifyContent:'space-between',fontWeight:'bold',fontSize:'11px',borderBottom:'1px solid #ccc',paddingBottom:'3px',marginBottom:'4px'}}>
-                <span style={{flex:2}}>Item</span>
-                <span style={{flex:'0 0 24px',textAlign:'center'}}>Qty</span>
-                <span style={{flex:1.2,textAlign:'right'}}>Price</span>
-                <span style={{flex:1.2,textAlign:'right'}}>Total</span>
+              <div className="receipt-items-header">
+                <span className="item-name">Item</span>
+                <span className="item-qty">Qty</span>
+                <span className="item-price">Price</span>
+                <span className="item-total">Total</span>
               </div>
 
               {/* ── Items ── */}
               {data.items.map((item,i) => (
-                <div key={i} style={{display:'flex',justifyContent:'space-between',margin:'4px 0',fontSize:'12px'}}>
-                  <span style={{flex:2,fontWeight:'bold'}}>{item.name}</span>
-                  <span style={{flex:'0 0 24px',textAlign:'center'}}>{item.qty}</span>
-                  <span style={{flex:1.2,textAlign:'right'}}>KES {item.price.toLocaleString('en-KE',{minimumFractionDigits:2})}</span>
-                  <span style={{flex:1.2,textAlign:'right',fontWeight:'bold'}}>KES {item.total.toLocaleString('en-KE',{minimumFractionDigits:2})}</span>
+                <div key={i} className="receipt-item">
+                  <span className="item-name">{item.name}</span>
+                  <span className="item-qty">{item.qty}</span>
+                  <span className="item-price">KES {item.price.toLocaleString('en-KE',{minimumFractionDigits:2})}</span>
+                  <span className="item-total">KES {item.total.toLocaleString('en-KE',{minimumFractionDigits:2})}</span>
                 </div>
               ))}
 
               {/* ── Divider ── */}
-              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+              <div className="receipt-divider"/>
 
               {/* ── Subtotal / discount / tax ── */}
-              <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+              <div className="receipt-row">
                 <span>Subtotal:</span>
                 <span>{fmt(data.subtotal)}</span>
               </div>
               {data.discount > 0 && (
-                <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                <div className="receipt-row">
                   <span>Discount:</span>
                   <span>-{fmt(data.discount)}</span>
                 </div>
               )}
               {data.tax > 0 && (
-                <div style={{display:'flex',justifyContent:'space-between',margin:'3px 0'}}>
+                <div className="receipt-row">
                   <span>Tax ({Math.round(data.taxRate*100)}%):</span>
                   <span>{fmt(data.tax)}</span>
                 </div>
               )}
 
               {/* ── Solid line + TOTAL ── */}
-              <div style={{borderTop:'2px solid #000',margin:'6px 0'}}/>
-              <div style={{display:'flex',justifyContent:'space-between',fontSize:'16px',fontWeight:'bold',margin:'4px 0'}}>
+              <div className="receipt-divider-solid"/>
+              <div className="receipt-total">
                 <span>TOTAL:</span>
                 <span>{fmt(data.total)}</span>
               </div>
 
               {/* ── Divider ── */}
-              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+              <div className="receipt-divider"/>
 
               {/* ── Payment method ── */}
-              <div style={{fontWeight:'bold',fontSize:'12px',marginBottom:'4px'}}>PAYMENT METHOD:</div>
+              <div className="receipt-payment-label">PAYMENT METHOD:</div>
               {data.payments.map((p,i) => (
-                <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:'12px',margin:'3px 0'}}>
+                <div key={i} className="receipt-payment-row">
                   <span>{getLabel(p.method)}:</span>
                   <span>{fmt(p.amount)}</span>
                 </div>
               ))}
               {data.change > 0 && (
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:'12px',margin:'3px 0',fontWeight:'bold'}}>
+                <div className="receipt-payment-row font-bold">
                   <span>Change:</span>
                   <span>{fmt(data.change)}</span>
                 </div>
               )}
 
               {/* ── Divider ── */}
-              <div style={{borderTop:'1px dashed #777',margin:'6px 0'}}/>
+              <div className="receipt-divider"/>
 
               {/* ── Footer messages ── */}
-              <div style={{textAlign:'center',fontSize:'12px',fontWeight:'bold',margin:'3px 0'}}>
+              <div className="receipt-footer">
                 {data.receiptFooter || 'Thank you for your business!'}
               </div>
-              <div style={{textAlign:'center',fontSize:'11px',margin:'2px 0'}}>Please come again</div>
-              <div style={{textAlign:'center',fontSize:'11px',margin:'2px 0'}}>We value our customers</div>
+              <div className="text-center text-xs text-gray-600 my-0.5">Please come again</div>
+              <div className="text-center text-xs text-gray-600 my-0.5">We value our customers</div>
 
               {/* ── Receipt ID at bottom ── */}
-              <div style={{textAlign:'center',fontSize:'11px',marginTop:'6px',color:'#444'}}>
+              <div className="text-center text-xs text-gray-500 mt-1.5">
                 {shortId}
               </div>
 
@@ -581,7 +583,7 @@ function ThermalReceipt({data,onClose}:{data:ReceiptData;onClose:()=>void}) {
         {/* Actions */}
         <div className="px-5 py-4 border-t border-gray-100 flex gap-3 shrink-0">
           <button onClick={onClose}
-            className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">
+            className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm" aria-label="Close" title="Close">
             Skip
           </button>
           <button onClick={handlePrint}
@@ -622,7 +624,12 @@ function PaymentModal({total,selectedCustomer,onComplete,onClose}:{
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <div><h3 className="font-bold text-gray-800 text-lg">Payment</h3><p className="text-xs text-gray-400">Split across multiple methods if needed</p></div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"><X className="w-4 h-4"/></button>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+            aria-label="Close payment modal"
+            title="Close">
+            <X className="w-4 h-4"/>
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex justify-between items-center">
@@ -645,15 +652,15 @@ function PaymentModal({total,selectedCustomer,onComplete,onClose}:{
                 <div key={payment.id} className={clsx('border-2 rounded-xl p-3.5',cfg?.light||'bg-gray-50 border-gray-200')}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5"><Icon className="w-4 h-4"/><span className="text-xs font-bold uppercase">Payment {index+1}</span></div>
-                    {payments.length>1&&<button onClick={()=>removePayment(payment.id)} className="w-5 h-5 rounded-full bg-white/70 hover:bg-red-100 flex items-center justify-center"><X className="w-3 h-3 text-red-500"/></button>}
+                    {payments.length>1&&<button onClick={()=>removePayment(payment.id)} className="w-5 h-5 rounded-full bg-white/70 hover:bg-red-100 flex items-center justify-center" aria-label="Remove this payment method" title="Remove payment"><X className="w-3 h-3 text-red-500"/></button>}
                   </div>
                   <div className="flex gap-2">
-                    <select value={payment.method} onChange={e=>updatePayment(payment.id,'method',e.target.value)} className="flex-1 px-2.5 py-2 bg-white border border-white/70 rounded-lg text-sm outline-none font-semibold">
+                    <select value={payment.method} onChange={e=>updatePayment(payment.id,'method',e.target.value)} className="flex-1 px-2.5 py-2 bg-white border border-white/70 rounded-lg text-sm outline-none font-semibold" aria-label="Payment method">
                       {paymentMethods.map(m=><option key={m.id} value={m.id} disabled={used.includes(m.id)}>{m.label}</option>)}
                     </select>
                     <div className="relative flex-1">
                       <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs opacity-50">KES</span>
-                      <input type="number" min="0" value={payment.amount||''} onChange={e=>updatePayment(payment.id,'amount',parseFloat(e.target.value)||0)} className="w-full pl-9 pr-2 py-2 bg-white border border-white/70 rounded-lg text-sm outline-none font-bold text-right"/>
+                      <input type="number" min="0" value={payment.amount||''} onChange={e=>updatePayment(payment.id,'amount',parseFloat(e.target.value)||0)} className="w-full pl-9 pr-2 py-2 bg-white border border-white/70 rounded-lg text-sm outline-none font-bold text-right" aria-label="Payment amount"/>
                     </div>
                     {remaining>0&&<button onClick={()=>fillRemaining(payment.id)} className="px-2.5 py-2 bg-white/70 hover:bg-white border border-white/50 rounded-lg text-xs font-bold whitespace-nowrap">Fill ↑</button>}
                   </div>
@@ -669,12 +676,12 @@ function PaymentModal({total,selectedCustomer,onComplete,onClose}:{
             <div className="flex justify-between text-sm font-semibold"><span className="text-gray-600">Total Paid</span><span className="font-bold">KES {totalPaid.toLocaleString()}</span></div>
             {!isFullyPaid&&remaining>0&&<div className="flex justify-between text-sm font-bold"><span className="text-red-600">Remaining</span><span className="text-red-600">KES {remaining.toLocaleString()}</span></div>}
             {change>0&&<div className="flex justify-between font-black"><span className="text-green-700">Change</span><span className="text-green-700">KES {change.toLocaleString()}</span></div>}
-            <div className="h-2 bg-white/60 rounded-full overflow-hidden"><div className={clsx('h-full rounded-full transition-all',isFullyPaid?'bg-green-500':'bg-red-400')} style={{width:`${pct}%`}}/></div>
+            <div className="h-2 bg-white/60 rounded-full overflow-hidden"><div className={clsx('h-full rounded-full transition-all',isFullyPaid?'bg-green-500':'bg-red-400',`w-[${pct}%]`)} /></div>
             <p className={clsx('text-xs text-right font-semibold',isFullyPaid?'text-green-600':'text-red-500')}>{isFullyPaid?`✓ Paid${change>0?` · Change KES ${change.toLocaleString()}`:''}`: `${pct.toFixed(0)}% covered`}</p>
           </div>
         </div>
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3 shrink-0">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm" aria-label="Close" title="Close">Cancel</button>
           <button onClick={handleComplete} disabled={isProcessing||!isFullyPaid||(hasCredit&&!selectedCustomer)}
             className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:cursor-not-allowed">
             {isProcessing?<><Loader2 className="w-4 h-4 animate-spin"/>Processing...</>:<><CheckCircle className="w-4 h-4"/>Complete Sale</>}
@@ -688,7 +695,7 @@ function PaymentModal({total,selectedCustomer,onComplete,onClose}:{
 // ── Main POS Page ────────────────────────────────────────
 export default function POSPage() {
   const { profile } = useAuthStore()
-  const { isOpen: registerIsOpen, openingAmount, openedAt, closeRegister } = useRegisterStore()
+  const { isOpen: registerIsOpen, openingAmount, openedAt } = useRegisterStore()
 
   const {
     cart, addToCart, removeFromCart, clearCart,
@@ -1044,6 +1051,8 @@ export default function POSPage() {
                       )}
                     </div>
                     <button onClick={() => { setCustomer(null); setCustomerQuery('') }}
+                      title="Clear customer"
+                      aria-label="Clear customer selection"
                       className="w-6 h-6 rounded-full bg-blue-200 hover:bg-red-100 flex items-center justify-center shrink-0 transition-colors">
                       <X className="w-3 h-3 text-blue-700 hover:text-red-500"/>
                     </button>
@@ -1095,7 +1104,8 @@ export default function POSPage() {
               {/* Add customer button */}
               <button onClick={() => setShowCreateCustomer(true)}
                 className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center shrink-0 transition-colors"
-                title="Add new customer">
+                title="Add new customer"
+                aria-label="Add new customer">
                 <UserPlus className="w-4 h-4"/>
               </button>
             </div>
@@ -1115,6 +1125,8 @@ export default function POSPage() {
               />
               {productQuery && (
                 <button onClick={() => { setProductQuery(''); setProductResults([]); setShowProductDrop(false) }}
+                  title="Clear search"
+                  aria-label="Clear product search"
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 bg-gray-200 hover:bg-gray-300 rounded-full flex items-center justify-center">
                   <X className="w-3 h-3 text-gray-500"/>
                 </button>
@@ -1194,13 +1206,18 @@ export default function POSPage() {
                       <td className="px-2 py-1.5 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button onClick={() => handleQtyChange(item.product_id, item.quantity - 1)}
+                            title="Decrease quantity"
+                            aria-label="Decrease quantity"
+                            disabled={item.quantity <= 1}
                             className="w-6 h-6 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center shrink-0">
                             <Minus className="w-3 h-3 text-gray-600"/>
                           </button>
                           <input type="number" min="1" max={item.stock_quantity} value={item.quantity}
                             onChange={e => handleQtyChange(item.product_id, parseInt(e.target.value) || 1)}
-                            className="w-12 text-center font-bold text-gray-800 border-2 border-blue-200 rounded-lg py-0.5 outline-none focus:border-blue-500 bg-white text-sm"/>
+                            className="w-12 text-center font-bold text-gray-800 border-2 border-blue-200 rounded-lg py-0.5 outline-none focus:border-blue-500 bg-white text-sm" aria-label="Quantity" title="Quantity" />
                           <button onClick={() => handleQtyChange(item.product_id, item.quantity + 1)}
+                            title="Increase quantity"
+                            aria-label="Increase quantity"
                             disabled={item.quantity >= item.stock_quantity}
                             className="w-6 h-6 rounded bg-blue-100 hover:bg-blue-200 disabled:opacity-40 flex items-center justify-center shrink-0">
                             <Plus className="w-3 h-3 text-blue-600"/>
@@ -1215,7 +1232,7 @@ export default function POSPage() {
                               item.unit_price < item.selling_price
                                 ? 'border-red-400 text-red-600 focus:border-red-500'
                                 : 'border-gray-200 text-gray-700 focus:border-orange-400'
-                            }`}
+                            }`} aria-label="Unit Price" title="Unit Price"
                           />
                           {item.unit_price < item.selling_price && (
                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-red-600 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover/price:opacity-100 transition-opacity pointer-events-none z-10">
@@ -1229,6 +1246,8 @@ export default function POSPage() {
                       </td>
                       <td className="pr-2 py-1.5">
                         <button onClick={() => removeFromCart(item.product_id)}
+                          title="Remove item"
+                          aria-label="Remove item from cart"
                           className="w-6 h-6 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center">
                           <X className="w-3.5 h-3.5 text-red-400"/>
                         </button>
@@ -1375,7 +1394,7 @@ export default function POSPage() {
       </div>
 
       {/* MODALS */}
-      {showCloseRegister&&<RegisterModal mode="close" onComplete={()=>{setShowCloseRegister(false);closeRegister()}}/>}
+      {showCloseRegister&&<RegisterModal mode="close" onComplete={()=>{setShowCloseRegister(false)}}/>}
       {showPayModal&&<PaymentModal total={total} selectedCustomer={selectedCustomer} onComplete={handleCheckout} onClose={()=>setShowPayModal(false)}/>}
       {receiptData&&<ThermalReceipt data={receiptData} onClose={()=>setReceiptData(null)}/>}
 
@@ -1384,7 +1403,7 @@ export default function POSPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <div><h3 className="font-bold">Held Orders</h3><p className="text-xs text-gray-400">Tap to resume</p></div>
-              <button onClick={()=>setShowHeld(false)}><X className="w-5 h-5 text-gray-400"/></button>
+              <button onClick={()=>setShowHeld(false)} aria-label="Close held orders" title="Close"><X className="w-5 h-5 text-gray-400"/></button>
             </div>
             <div className="px-6 py-4 max-h-96 overflow-y-auto">
               {suspendedOrders.length===0
@@ -1406,7 +1425,7 @@ export default function POSPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <div><h3 className="font-bold">Recent Sales</h3><p className="text-xs text-gray-400">Latest transactions</p></div>
-              <button onClick={()=>setShowRecent(false)}><X className="w-5 h-5 text-gray-400"/></button>
+              <button onClick={()=>setShowRecent(false)} aria-label="Close recent sales" title="Close"><X className="w-5 h-5 text-gray-400"/></button>
             </div>
             <div className="px-6 py-4 max-h-96 overflow-y-auto space-y-2">
               {recentSales.length===0
@@ -1431,7 +1450,7 @@ export default function POSPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <div><h3 className="font-bold">New Customer</h3><p className="text-xs text-gray-400">Create and select instantly</p></div>
-              <button onClick={()=>{setShowCreateCustomer(false);setNewCustomerName('');setNewCustomerPhone('')}}><X className="w-5 h-5 text-gray-400"/></button>
+              <button onClick={()=>{setShowCreateCustomer(false);setNewCustomerName('');setNewCustomerPhone('')}} aria-label="Close new customer dialog" title="Close"><X className="w-5 h-5 text-gray-400"/></button>
             </div>
             <div className="px-6 py-5 space-y-4">
               <div>

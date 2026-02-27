@@ -6,7 +6,6 @@ import {
   X, Loader2, Truck, DollarSign, AlertCircle,
   TrendingUp, RefreshCw
 } from 'lucide-react'
-import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -63,7 +62,7 @@ function SupplierModal({
             <h3 className="font-bold text-gray-800">{supplier ? 'Edit Supplier' : 'Add Supplier'}</h3>
             <p className="text-xs text-gray-400">Fill in supplier details</p>
           </div>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+          <button onClick={onClose} title="Close modal"><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-4">
@@ -134,7 +133,7 @@ function PaymentModal({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-bold text-gray-800">Pay Supplier</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
+          <button onClick={onClose} title="Close modal"><X className="w-5 h-5 text-gray-400" /></button>
         </div>
         <div className="px-6 py-5 space-y-4">
           <div className="bg-red-50 border border-red-200 rounded-xl p-3">
@@ -149,7 +148,7 @@ function PaymentModal({
             <label className="block text-xs font-semibold text-gray-600 mb-1">Payment Amount *</label>
             <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm 
-                outline-none focus:border-blue-400 bg-gray-50 text-lg font-bold"
+                outline-none focus:border-blue-400 bg-gray-50 font-bold"
               placeholder="Enter amount..." />
             <div className="flex gap-2 mt-2">
               {[supplier.outstanding_debt, supplier.outstanding_debt / 2].map(v => (
@@ -172,9 +171,11 @@ function PaymentModal({
 
           <div className="flex gap-3">
             <button onClick={onClose}
+              title="Cancel payment"
               className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold 
                 rounded-xl hover:bg-gray-50 text-sm">Cancel</button>
             <button onClick={handlePay} disabled={isPaying}
+              title="Confirm payment to supplier"
               className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold 
                 rounded-xl text-sm disabled:opacity-60 flex items-center justify-center gap-2">
               {isPaying && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -290,12 +291,14 @@ export default function SuppliersPage() {
         </div>
         <div className="flex gap-2">
           <button onClick={fetchSuppliers}
+            title="Refresh supplier list"
             className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 
               text-gray-500 rounded-xl hover:bg-gray-50">
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
           {canEdit && (
             <button onClick={() => { setEditingSupplier(null); setShowModal(true) }}
+              title="Add new supplier"
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 
                 text-white text-sm font-semibold rounded-xl transition-colors">
               <Plus className="w-4 h-4" />
@@ -318,6 +321,7 @@ export default function SuppliersPage() {
             <p className="text-base font-medium text-gray-400">No suppliers found</p>
             {canEdit && !search && (
               <button onClick={() => { setEditingSupplier(null); setShowModal(true) }}
+                title="Add new supplier"
                 className="mt-4 px-4 py-2 bg-blue-600 text-white text-sm font-semibold 
                   rounded-xl hover:bg-blue-700 flex items-center gap-2">
                 <Plus className="w-4 h-4" /> Add Supplier
@@ -401,12 +405,12 @@ export default function SuppliersPage() {
                           <>
                             <button onClick={() => { setEditingSupplier(supplier); setShowModal(true) }}
                               className="w-7 h-7 bg-blue-50 hover:bg-blue-100 text-blue-600 
-                                rounded-lg flex items-center justify-center">
+                                rounded-lg flex items-center justify-center" aria-label="Edit supplier" title="Edit supplier" >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => deleteSupplier(supplier.id)}
                               className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-500 
-                                rounded-lg flex items-center justify-center">
+                                rounded-lg flex items-center justify-center" aria-label="Delete supplier" title="Delete supplier">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </>

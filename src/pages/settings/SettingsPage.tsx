@@ -250,13 +250,14 @@ export default function SettingsPage() {
       {/* Location selector — only shown to owner */}
       {profile?.role === 'owner' && locations.length > 1 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
-          <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+          <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-blue-500" />Configure Branch
           </label>
           <select
             value={selectedLocation}
             onChange={e => setSelectedLocation(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 bg-gray-50 font-medium"
+            aria-label="Select branch to configure"
           >
             {locations.map(loc => (
               <option key={loc.id} value={loc.id}>{loc.name}{!loc.is_active ? ' (inactive)' : ''}</option>
@@ -305,6 +306,7 @@ export default function SettingsPage() {
                   value={form.currency}
                   onChange={e => updateField('currency', e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 bg-gray-50"
+                  aria-label="Currency selector"
                 >
                   {currencies.map(c => (
                     <option key={c.code} value={c.code}>{c.label}</option>
@@ -322,6 +324,7 @@ export default function SettingsPage() {
                     value={form.tax_rate}
                     onChange={e => updateField('tax_rate', parseFloat(e.target.value) || 0)}
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 bg-gray-50 pr-8"
+                    aria-label="Tax rate input"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">%</span>
                 </div>
@@ -332,7 +335,7 @@ export default function SettingsPage() {
             {/* Phone + Address */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5" />Phone
                 </label>
                 <input
@@ -344,7 +347,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
                   <Globe className="w-3.5 h-3.5" />Website
                 </label>
                 <input
@@ -359,7 +362,7 @@ export default function SettingsPage() {
 
             {/* Address */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5" />Address
               </label>
               <input
@@ -380,13 +383,14 @@ export default function SettingsPage() {
                 value={form.low_stock_threshold}
                 onChange={e => updateField('low_stock_threshold', parseInt(e.target.value) || 10)}
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 bg-gray-50"
+                aria-label="Low stock threshold input" 
               />
               <p className="text-xs text-gray-400 mt-1">Products below this quantity will show low stock warnings</p>
             </div>
 
             {/* Receipt Footer */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5" />Receipt Footer Message
               </label>
               <textarea

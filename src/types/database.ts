@@ -1,4 +1,4 @@
-export type UserRole = 'owner' | 'admin' | 'accountant' | 'cashier'
+export type UserRole = 'owner' | 'admin' | 'accountant' | 'cashier' | 'storekeeper'
 export type PaymentMethod = 'cash' | 'card' | 'credit' | 'mobile_money'
 export type POStatus = 'pending' | 'received' | 'partial' | 'cancelled'
 

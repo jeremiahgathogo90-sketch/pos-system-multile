@@ -16,6 +16,7 @@ export type WatchTable =
   | 'store_stock'
   | 'stock_transfers'
   | 'stock_transfer_items'
+  | 'audit_log'
 
 /**
  * useRealtime

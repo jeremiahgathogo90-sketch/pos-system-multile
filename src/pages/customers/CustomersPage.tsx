@@ -6,7 +6,6 @@ import {
   Mail, CreditCard, AlertCircle, X, Loader2,
   DollarSign, Users, TrendingDown, RefreshCw
 } from 'lucide-react'
-import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -31,7 +30,7 @@ function CustomerModal({
   onClose: () => void
 }) {
   const [isSaving, setIsSaving] = useState(false)
-  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       name: customer?.name || '',
@@ -68,7 +67,7 @@ function CustomerModal({
             <h3 className="font-bold text-gray-800">{customer ? 'Edit Customer' : 'Add Customer'}</h3>
             <p className="text-xs text-gray-400">Fill in customer details</p>
           </div>
-          <button onClick={onClose}>
+          <button onClick={onClose} title="Close" aria-label="Close modal">
             <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
           </button>
         </div>
@@ -153,7 +152,7 @@ function PaymentModal({
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-bold text-gray-800">Record Payment</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
+          <button onClick={onClose} title="Close" aria-label="Close modal"><X className="w-5 h-5 text-gray-400" /></button>
         </div>
         <div className="px-6 py-5 space-y-4">
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-3">
@@ -170,7 +169,7 @@ function PaymentModal({
               type="number" value={amount} onChange={e => setAmount(e.target.value)}
               max={customer.outstanding_balance} placeholder="Enter amount..."
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm 
-                outline-none focus:border-blue-400 bg-gray-50 font-bold text-lg"
+                outline-none focus:border-blue-400 bg-gray-50 font-bold text-gray-700" aria-label="Payment amount input"
             />
             <div className="flex gap-2 mt-2">
               {[customer.outstanding_balance, customer.outstanding_balance / 2].map(v => (
@@ -316,7 +315,7 @@ export default function CustomersPage() {
           />
         </div>
         <div className="flex gap-2">
-          <button onClick={fetchCustomers}
+          <button onClick={fetchCustomers} title="Refresh" aria-label="Refresh customers"
             className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 
               text-gray-500 text-sm rounded-xl hover:bg-gray-50 transition-colors">
             <RefreshCw className="w-3.5 h-3.5" />
@@ -446,12 +445,12 @@ export default function CustomersPage() {
                         )}
                         {canEdit && (
                           <>
-                            <button onClick={() => { setEditingCustomer(customer); setShowModal(true) }}
+                            <button onClick={() => { setEditingCustomer(customer); setShowModal(true) }} title="Edit" aria-label="Edit customer"
                               className="w-7 h-7 bg-blue-50 hover:bg-blue-100 text-blue-600 
                                 rounded-lg flex items-center justify-center">
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => deleteCustomer(customer.id)}
+                            <button onClick={() => deleteCustomer(customer.id)} title="Delete" aria-label="Delete customer"
                               className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-500 
                                 rounded-lg flex items-center justify-center">
                               <Trash2 className="w-3.5 h-3.5" />

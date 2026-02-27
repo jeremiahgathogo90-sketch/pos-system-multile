@@ -146,7 +146,7 @@ export default function Cart() {
                 <p className="text-xs text-blue-500">Balance: KES {selectedCustomer.outstanding_balance.toLocaleString()}</p>
               </div>
             </div>
-            <button onClick={() => { setCustomer(null); setShowCustomerSearch(false) }}>
+            <button onClick={() => { setCustomer(null); setShowCustomerSearch(false) }} aria-label="Remove customer">
               <X className="w-4 h-4 text-blue-400 hover:text-blue-600" />
             </button>
           </div>
@@ -207,7 +207,8 @@ export default function Cart() {
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
                     className="w-6 h-6 bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center 
-                      justify-center transition-colors">
+                      justify-center transition-colors"
+                      aria-label={`Decrease quantity of ${item.product_name}`}>
                     <Minus className="w-3 h-3 text-gray-600" />
                   </button>
                   <span className="text-sm font-bold text-gray-800 w-6 text-center">
@@ -217,12 +218,13 @@ export default function Cart() {
                     onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                     disabled={item.quantity >= item.stock_quantity}
                     className="w-6 h-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 
-                      rounded-lg flex items-center justify-center transition-colors">
+                      rounded-lg flex items-center justify-center transition-colors"                    aria-label={`Increase quantity of ${item.product_name}`}>
                     <Plus className="w-3 h-3 text-white" />
                   </button>
                   <button onClick={() => removeFromCart(item.product_id)}
                     className="w-6 h-6 bg-red-100 hover:bg-red-200 rounded-lg flex items-center 
-                      justify-center ml-1 transition-colors">
+                      justify-center ml-1 transition-colors"
+                      aria-label={`Remove ${item.product_name} from cart`}>
                     <Trash2 className="w-3 h-3 text-red-500" />
                   </button>
                 </div>

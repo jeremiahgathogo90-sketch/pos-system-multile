@@ -107,7 +107,7 @@ function UserModal({
           </div>
           <button onClick={onClose}
             className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 
-              flex items-center justify-center transition-colors">
+              flex items-center justify-center transition-colors" aria-label="Close" title="Close">
             <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
@@ -214,7 +214,7 @@ function UserModal({
               <select
                 value={locationId}
                 onChange={e => setLocationId(e.target.value)}
-                className={inputClass}>
+                className={inputClass} aria-label="Location" title="Location">
                 <option value="">-- Select Branch --</option>
                 {locations.map(loc => (
                   <option key={loc.id} value={loc.id}>{loc.name}</option>
@@ -259,7 +259,7 @@ function UserModal({
             type="button"
             onClick={onClose}
             className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold 
-              rounded-xl hover:bg-gray-50 text-sm transition-colors">
+              rounded-xl hover:bg-gray-50 text-sm transition-colors" aria-label="Close" title="Close">
             Cancel
           </button>
           <button
@@ -492,14 +492,14 @@ export default function UsersPage() {
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl 
               text-sm outline-none focus:border-blue-400"
-          />
+           aria-label="Search" title="Search" />
         </div>
         <div className="flex gap-2 flex-wrap">
           <select
             value={roleFilter}
             onChange={e => setRoleFilter(e.target.value as any)}
             className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm 
-              outline-none text-gray-700">
+              outline-none text-gray-700" aria-label="Filter by role" title="Filter by role">
             <option value="all">All Roles</option>
             {Object.entries(roleConfig).map(([r, cfg]) => (
               <option key={r} value={r}>{cfg.label}</option>
@@ -509,7 +509,8 @@ export default function UsersPage() {
           <button
             onClick={fetchAll}
             className="px-3 py-2 border border-gray-200 text-gray-500 rounded-xl 
-              hover:bg-gray-50 transition-colors">
+              hover:bg-gray-50 transition-colors"
+            title="Refresh data" aria-label="Refresh data">
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
 

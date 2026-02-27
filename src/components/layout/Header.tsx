@@ -43,7 +43,7 @@ export default function Header() {
 
         {/* Notification bell (placeholder) */}
         <button className="relative w-9 h-9 bg-gray-50 hover:bg-gray-100 rounded-xl 
-          flex items-center justify-center transition-colors">
+          flex items-center justify-center transition-colors" title="Notifications">
           <Bell className="w-4 h-4 text-gray-500" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
         </button>

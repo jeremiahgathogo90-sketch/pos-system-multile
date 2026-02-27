@@ -322,14 +322,16 @@ export default function ReportsPage() {
                   <Calendar className="w-3.5 h-3.5 text-gray-400" />
                   <input type="date" value={customFrom}
                     onChange={e => setCustomFrom(e.target.value)}
-                    className="text-sm outline-none text-gray-700" />
+                    className="text-sm outline-none text-gray-700"
+                    aria-label="Select start date" />
                 </div>
                 <span className="text-gray-400 text-sm">to</span>
                 <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2">
                   <Calendar className="w-3.5 h-3.5 text-gray-400" />
                   <input type="date" value={customTo}
                     onChange={e => setCustomTo(e.target.value)}
-                    className="text-sm outline-none text-gray-700" />
+                    className="text-sm outline-none text-gray-700"
+                    aria-label="Select end date" />
                 </div>
               </div>
             )}
@@ -339,7 +341,8 @@ export default function ReportsPage() {
               <select value={locationFilter}
                 onChange={e => setLocationFilter(e.target.value)}
                 className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl 
-                  text-sm outline-none focus:border-blue-400 text-gray-700">
+                  text-sm outline-none focus:border-blue-400 text-gray-700" 
+                aria-label="Select branch filter">
                 <option value="all">All Branches</option>
                 {locations.map(loc => (
                   <option key={loc.id} value={loc.id}>{loc.name}</option>
@@ -441,7 +444,7 @@ export default function ReportsPage() {
                 axisLine={false} tickLine={false}
                 tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
               <Tooltip
-                formatter={(v: number) => [fmt(v), 'Revenue']}
+                formatter={(v: unknown) => [fmt(v as number), 'Revenue']}
                 contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
               />
               <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2.5}
@@ -479,7 +482,7 @@ export default function ReportsPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(v: number) => [fmt(v), 'Revenue']}
+                    formatter={(v: unknown) => [fmt(v as number), 'Revenue']}
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
                   />
                   <Legend
@@ -496,7 +499,6 @@ export default function ReportsPage() {
                 {paymentBreakdown.map((pm, i) => {
                   const pct = summary.totalSales > 0
                     ? Math.round((pm.total / summary.totalSales) * 100) : 0
-                  const Icon = paymentIcons[pm.method] || Banknote
                   return (
                     <div key={pm.method}>
                       <div className="flex items-center justify-between mb-1">
@@ -612,8 +614,8 @@ export default function ReportsPage() {
                     </div>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all"
-                        style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }}
-                      />
+                        style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }}>
+                      </div>
                     </div>
                   </div>
                   {i === 0 && (
@@ -649,7 +651,7 @@ export default function ReportsPage() {
                 axisLine={false} tickLine={false}
                 tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
               <Tooltip
-                formatter={(v: number) => [fmt(v), 'Revenue']}
+                formatter={(v: unknown) => [fmt(v as number), 'Revenue']}
                 contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }}
               />
               <Bar dataKey="total" fill="#3b82f6" radius={[6, 6, 0, 0]} />

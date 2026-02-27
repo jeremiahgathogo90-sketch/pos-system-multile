@@ -185,7 +185,7 @@ export default function InventoryPage() {
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value)}
               className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm 
-                outline-none focus:border-blue-400 text-gray-700">
+                outline-none focus:border-blue-400 text-gray-700" aria-label="Select category filter">
               <option value="all">All Categories</option>
               {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -196,7 +196,7 @@ export default function InventoryPage() {
               value={stockFilter}
               onChange={e => setStockFilter(e.target.value as any)}
               className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm 
-                outline-none focus:border-blue-400 text-gray-700">
+                outline-none focus:border-blue-400 text-gray-700" aria-label="Select stock level filter">
               <option value="all">All Stock</option>
               <option value="low">Low Stock</option>
               <option value="out">Out of Stock</option>
@@ -373,9 +373,10 @@ export default function InventoryPage() {
                         {canEdit && (
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                              onClick={() => { setEditingProduct(product); setShowProductModal(true) }}
+                              onClick={() => { setEditingProduct(product); setShowProductModal(true) }} 
                               className="w-7 h-7 bg-blue-50 hover:bg-blue-100 text-blue-600 
-                                rounded-lg flex items-center justify-center transition-colors">
+                                rounded-lg flex items-center justify-center transition-colors"
+                              aria-label="Edit product">
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button
@@ -383,7 +384,7 @@ export default function InventoryPage() {
                               disabled={deletingId === product.id}
                               className="w-7 h-7 bg-red-50 hover:bg-red-100 text-red-500 
                                 rounded-lg flex items-center justify-center transition-colors
-                                disabled:opacity-50">
+                                disabled:opacity-50" aria-label="Delete product">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>

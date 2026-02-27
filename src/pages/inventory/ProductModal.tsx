@@ -1,27 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import type { Resolver } from 'react-hook-form'
 import { X, Loader2 } from 'lucide-react'
 import type { Product, Category } from '../../types/database'
 
 const schema = z.object({
-  name: z.string().min(1, 'Product name is required'),
-  barcode: z.string().optional(),
-  category_id: z.string().optional(),
-  buying_price: z.coerce.number().min(0, 'Must be 0 or more'),
-  selling_price: z.coerce.number().min(0.01, 'Must be greater than 0'),
-  stock_quantity: z.coerce.number().int().min(0),
-  unit: z.string().min(1, 'Unit is required'),
+  name:           z.string().min(1, 'Product name is required'),
+  barcode:        z.string().optional(),
+  category_id:    z.string().optional(),
+  buying_price:   z.preprocess(v => Number(v), z.number().min(0, 'Must be 0 or more')),
+  selling_price:  z.preprocess(v => Number(v), z.number().min(0.01, 'Must be greater than 0')),
+  stock_quantity: z.preprocess(v => Number(v), z.number().int().min(0)),
+  unit:           z.string().min(1, 'Unit is required'),
 })
 
 type FormData = z.infer<typeof schema>
 
 interface Props {
-  product?: Product | null
-  categories: Category[]
-  onSave: (data: Partial<Product>) => Promise<void>
-  onClose: () => void
+  product?:    Product | null
+  categories:  Category[]
+  onSave:      (data: Partial<Product>) => Promise<void>
+  onClose:     () => void
 }
 
 const units = ['pcs', 'kg', 'g', 'litre', 'ml', 'box', 'dozen', 'pack', 'bag', 'roll']
@@ -29,18 +30,31 @@ const units = ['pcs', 'kg', 'g', 'litre', 'ml', 'box', 'dozen', 'pack', 'bag', '
 export default function ProductModal({ product, categories, onSave, onClose }: Props) {
   const [isSaving, setIsSaving] = useState(false)
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema) as unknown as Resolver<FormData>,
     defaultValues: {
-      name: product?.name || '',
-      barcode: product?.barcode || '',
-      category_id: product?.category_id || '',
-      buying_price: product?.buying_price || 0,
-      selling_price: product?.selling_price || 0,
+      name:           product?.name           || '',
+      barcode:        product?.barcode        || '',
+      category_id:    product?.category_id    || '',
+      buying_price:   product?.buying_price   || 0,
+      selling_price:  product?.selling_price  || 0,
       stock_quantity: product?.stock_quantity || 0,
-      unit: product?.unit || 'pcs',
-    }
+      unit:           product?.unit           || 'pcs',
+    },
   })
+
+  const buyingPrice  = watch('buying_price')
+  const sellingPrice = watch('selling_price')
+
+  const margin =
+    buyingPrice > 0 && sellingPrice > 0
+      ? (((sellingPrice - buyingPrice) / buyingPrice) * 100).toFixed(1)
+      : null
 
   const onSubmit = async (data: FormData) => {
     setIsSaving(true)
@@ -48,17 +62,25 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
       await onSave({
         ...data,
         category_id: data.category_id || null,
-        barcode: data.barcode || null,
+        barcode:     data.barcode     || null,
       })
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
     } finally {
       setIsSaving(false)
     }
   }
 
-  const Field = ({ label, error, children }: any) => (
+  const Field = ({
+    label,
+    error,
+    children,
+  }: {
+    label: string
+    error?: string
+    children: React.ReactNode
+  }) => (
     <div>
       <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
       {children}
@@ -78,7 +100,7 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
 
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 
+        <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100
           flex items-center justify-between rounded-t-2xl z-10">
           <div>
             <h3 className="font-bold text-gray-800 text-lg">
@@ -88,8 +110,11 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
               {product ? 'Update product details' : 'Fill in the product information'}
             </p>
           </div>
-          <button onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close product form"
+            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200
               flex items-center justify-center transition-colors">
             <X className="w-4 h-4 text-gray-500" />
           </button>
@@ -99,19 +124,28 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
 
           {/* Name */}
           <Field label="Product Name *" error={errors.name?.message}>
-            <input {...register('name')} className={inputClass(!!errors.name)}
-              placeholder="e.g. Coca Cola 500ml" />
+            <input
+              {...register('name')}
+              aria-label="Product name"
+              placeholder="e.g. Coca Cola 500ml"
+              className={inputClass(!!errors.name)} />
           </Field>
 
           {/* Barcode */}
           <Field label="Barcode / SKU" error={errors.barcode?.message}>
-            <input {...register('barcode')} className={inputClass()}
-              placeholder="Scan or type barcode (optional)" />
+            <input
+              {...register('barcode')}
+              aria-label="Barcode or SKU"
+              placeholder="Scan or type barcode (optional)"
+              className={inputClass()} />
           </Field>
 
           {/* Category */}
           <Field label="Category">
-            <select {...register('category_id')} className={inputClass()}>
+            <select
+              {...register('category_id')}
+              aria-label="Category"
+              className={inputClass()}>
               <option value="">-- No Category --</option>
               {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -122,45 +156,88 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
           {/* Prices */}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Buying Price (KES) *" error={errors.buying_price?.message}>
-              <input {...register('buying_price')} type="number" step="0.01" min="0"
-                className={inputClass(!!errors.buying_price)} placeholder="0.00" />
+              <input
+                {...register('buying_price')}
+                type="number" step="0.01" min="0"
+                aria-label="Buying price"
+                placeholder="0.00"
+                className={inputClass(!!errors.buying_price)} />
             </Field>
             <Field label="Selling Price (KES) *" error={errors.selling_price?.message}>
-              <input {...register('selling_price')} type="number" step="0.01" min="0"
-                className={inputClass(!!errors.selling_price)} placeholder="0.00" />
+              <input
+                {...register('selling_price')}
+                type="number" step="0.01" min="0"
+                aria-label="Selling price"
+                placeholder="0.00"
+                className={inputClass(!!errors.selling_price)} />
             </Field>
           </div>
 
           {/* Stock & Unit */}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Stock Quantity *" error={errors.stock_quantity?.message}>
-              <input {...register('stock_quantity')} type="number" min="0"
-                className={inputClass(!!errors.stock_quantity)} placeholder="0" />
+              <input
+                {...register('stock_quantity')}
+                type="number" min="0"
+                aria-label="Stock quantity"
+                placeholder="0"
+                className={inputClass(!!errors.stock_quantity)} />
             </Field>
             <Field label="Unit *" error={errors.unit?.message}>
-              <select {...register('unit')} className={inputClass(!!errors.unit)}>
+              <select
+                {...register('unit')}
+                aria-label="Unit of measure"
+                className={inputClass(!!errors.unit)}>
                 {units.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </Field>
           </div>
 
-          {/* Profit preview */}
-          <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-            <p className="text-xs text-blue-600 font-medium">Margin Preview</p>
-            <p className="text-sm text-blue-800 mt-0.5">
-              Set prices above to see profit margin
+          {/* Margin preview */}
+          <div className={`rounded-xl p-3 border ${
+            margin === null
+              ? 'bg-gray-50 border-gray-100'
+              : Number(margin) < 0
+                ? 'bg-red-50 border-red-100'
+                : Number(margin) < 10
+                  ? 'bg-orange-50 border-orange-100'
+                  : 'bg-green-50 border-green-100'
+          }`}>
+            <p className={`text-xs font-medium ${
+              margin === null ? 'text-gray-400'
+              : Number(margin) < 0 ? 'text-red-600'
+              : Number(margin) < 10 ? 'text-orange-600'
+              : 'text-green-600'
+            }`}>
+              Margin Preview
+            </p>
+            <p className={`text-sm mt-0.5 font-semibold ${
+              margin === null ? 'text-gray-400'
+              : Number(margin) < 0 ? 'text-red-700'
+              : Number(margin) < 10 ? 'text-orange-700'
+              : 'text-green-700'
+            }`}>
+              {margin === null
+                ? 'Set prices above to see profit margin'
+                : Number(margin) < 0
+                  ? `⚠ Selling below cost (${margin}%)`
+                  : `${margin}% margin — KES ${(sellingPrice - buyingPrice).toFixed(2)} profit per unit`}
             </p>
           </div>
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose}
-              className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold 
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold
                 rounded-xl hover:bg-gray-50 transition-colors text-sm">
               Cancel
             </button>
-            <button type="submit" disabled={isSaving}
-              className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold 
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold
                 rounded-xl transition-colors text-sm flex items-center justify-center gap-2
                 disabled:opacity-60 disabled:cursor-not-allowed">
               {isSaving ? (
@@ -170,6 +247,7 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
               )}
             </button>
           </div>
+
         </form>
       </div>
     </div>

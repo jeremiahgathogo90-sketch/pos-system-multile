@@ -127,7 +127,7 @@ export default function MySalesPage() {
 
       const { data, error } = await q
       if (error) throw error
-      setSales(data as Sale[] || [])
+      setSales(data as unknown as Sale[] || [])
     } catch (err: any) {
       toast.error('Failed to load sales')
       console.error(err)
@@ -402,7 +402,7 @@ export default function MySalesPage() {
               className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 bg-white" />
           </div>
           <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 bg-white font-medium">
+            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 bg-white font-medium"          aria-label="Filter sales by payment method">
             <option value="all">All Methods</option>
             <option value="cash">Cash</option>
             <option value="card">Card</option>
@@ -572,7 +572,7 @@ export default function MySalesPage() {
                 <h3 className="font-bold text-gray-800">Collect Payment</h3>
                 <p className="text-xs text-gray-400">Clear customer outstanding balance</p>
               </div>
-              <button onClick={() => { setShowCollect(false); setSelectedSale(null); setCustomerBalance(0) }}>
+              <button onClick={() => { setShowCollect(false); setSelectedSale(null); setCustomerBalance(0) }} className="p-1 rounded hover:bg-gray-100 transition-colors" aria-label="Close collect payment modal">
                 <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
               </button>
             </div>
@@ -638,6 +638,7 @@ export default function MySalesPage() {
                   value={collectAmount}
                   onChange={e => setCollectAmount(e.target.value)}
                   className="w-full px-4 py-3 border-2 border-orange-300 rounded-xl text-2xl font-black outline-none focus:border-orange-500 text-right bg-orange-50 text-orange-800"
+                  aria-label="Enter amount to collect"
                 />
                 {/* Remaining balance preview */}
                 {collectAmount && parseFloat(collectAmount) > 0 && (

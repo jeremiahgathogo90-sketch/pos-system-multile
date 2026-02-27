@@ -210,7 +210,7 @@ function CreatePOModal({
             <h3 className="font-bold text-gray-800 text-lg">New Purchase Order</h3>
             <p className="text-xs text-gray-400">Order products from a supplier</p>
           </div>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+          <button onClick={onClose} aria-label="Close purchase order form" ><X className="w-5 h-5 text-gray-400 hover:text-gray-600"/></button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
@@ -219,7 +219,7 @@ function CreatePOModal({
               Supplier <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <select value={supplierId} onChange={e => setSupplierId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 bg-gray-50">
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 bg-gray-50"              aria-label="Select supplier for this purchase order">
               <option value="">-- No Supplier / Walk-in Purchase --</option>
               {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -267,18 +267,20 @@ function CreatePOModal({
                       <td className="px-4 py-2.5">
                         <input type="number" min="1" value={item.quantity_ordered}
                           onChange={e => updateItem(item.product_id, 'quantity_ordered', parseInt(e.target.value) || 1)}
-                          className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-blue-400 mx-auto block" />
+                          className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-blue-400 mx-auto block"
+                          aria-label="Update quantity ordered for this item" />
                       </td>
                       <td className="px-4 py-2.5">
                         <input type="number" min="0" step="0.01" value={item.unit_cost}
                           onChange={e => updateItem(item.product_id, 'unit_cost', parseFloat(e.target.value) || 0)}
-                          className="w-24 text-right border border-gray-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-blue-400 ml-auto block" />
+                          className="w-24 text-right border border-gray-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-blue-400 ml-auto block"
+                          aria-label="Update unit cost for this item" />
                       </td>
                       <td className="px-4 py-2.5 text-right font-semibold text-gray-800">
                         KES {(item.quantity_ordered * item.unit_cost).toLocaleString()}
                       </td>
                       <td className="px-4 py-2.5">
-                        <button onClick={() => removeItem(item.product_id)}>
+                        <button onClick={() => removeItem(item.product_id)} aria-label={`Remove ${item.product_name} from order`}>
                           <Trash2 className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
                         </button>
                       </td>
@@ -385,7 +387,7 @@ function ViewPOModal({ order, onUpdate, onClose }: {
               {order.supplier?.name || 'No Supplier'} · {new Date(order.created_at).toLocaleDateString('en-KE')}
             </p>
           </div>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+          <button onClick={onClose} aria-label="Close purchase order form" ><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -439,7 +441,8 @@ function ViewPOModal({ order, onUpdate, onClose }: {
                               onChange={e => setReceivedQtys(prev => ({
                                 ...prev, [item.id]: Math.min(parseInt(e.target.value) || 0, item.quantity_ordered)
                               }))}
-                              className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-blue-400 mx-auto block" />
+                              className="w-16 text-center border border-gray-200 rounded-lg px-2 py-1 text-sm outline-none focus:border-blue-400 mx-auto block"
+                              aria-label={`Update quantity received for ${item.product_name}`} />
                           )}
                         </td>
                         <td className="px-4 py-2.5 text-right text-gray-600">KES {item.unit_cost.toLocaleString()}</td>
@@ -617,14 +620,15 @@ export default function PurchasesPage() {
         </div>
         <div className="flex gap-2">
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)}
-            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 text-gray-700">
+            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 text-gray-700"           aria-label="Filter purchase orders by status">
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="partial">Partial</option>
             <option value="received">Received</option>
             <option value="cancelled">Cancelled</option>
           </select>
-          <button onClick={fetchAll} className="px-3 py-2 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50">
+          <button onClick={fetchAll} className="px-3 py-2 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50"
+                      aria-label="Refresh purchase orders list">
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
           <button onClick={() => setShowCreateModal(true)}
