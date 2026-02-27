@@ -46,6 +46,19 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false
+    let done = false
+
+    // Mark init as complete — safe to call multiple times
+    const finish = () => {
+      if (!cancelled && !done) {
+        done = true
+        setIsInitializing(false)
+      }
+    }
+
+    // Chrome sometimes stalls on getSession() due to strict cookie policies.
+    // This silent fallback ensures the app always renders within 5 seconds.
+    const fallback = setTimeout(finish, 5000)
 
     const initAuth = async () => {
       try {
@@ -55,15 +68,18 @@ export default function App() {
 
         if (currentSession?.user) {
           setSession(currentSession)
+          // fetchProfile has its own 6s abort — won't hang indefinitely
           await fetchProfile(currentSession.user.id)
         } else {
+          // Clear any stale persisted state (fixes Chrome localStorage issues)
           setSession(null)
           setProfile(null)
         }
       } catch (err) {
         console.error('Auth init error:', err)
       } finally {
-        if (!cancelled) setIsInitializing(false)
+        clearTimeout(fallback)
+        finish()
       }
     }
 
@@ -89,6 +105,7 @@ export default function App() {
 
     return () => {
       cancelled = true
+      clearTimeout(fallback)
       subscription.unsubscribe()
     }
   }, [])

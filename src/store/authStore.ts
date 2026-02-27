@@ -70,11 +70,10 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'pos-auth',
-      // isLoading is intentionally excluded — it must never be
-      // persisted, otherwise a stale true value causes infinite loading
+      // Only persist profile — Supabase manages session natively.
+      // Persisting session here causes stale token issues in Chrome
+      // leading to infinite loading screens.
       partialize: (state) => ({
-        session: state.session,
-        user:    state.user,
         profile: state.profile,
       }),
     }
