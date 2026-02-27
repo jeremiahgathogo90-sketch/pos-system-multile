@@ -44,7 +44,7 @@ export function useSessionTimeout() {
         action:     'session_timeout',
         meta:       { reason: 'inactivity_timeout' },
         location_id: profile.location_id,
-      }).catch(() => {}) // don't block logout if audit fails
+      }).match(() => {}) // don't block logout if audit fails
     }
 
     // Clear state

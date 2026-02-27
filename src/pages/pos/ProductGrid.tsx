@@ -62,6 +62,7 @@ export default function ProductGrid() {
       product_id: product.id,
       product_name: product.name,
       unit_price: product.selling_price,
+      selling_price: product.selling_price,
       quantity: 1,
       total_price: product.selling_price,
       stock_quantity: product.stock_quantity,

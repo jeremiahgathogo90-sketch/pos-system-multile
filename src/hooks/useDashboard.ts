@@ -35,9 +35,6 @@ export function useDashboard() {
       today.setHours(0, 0, 0, 0)
       const todayISO = today.toISOString()
 
-      // Base query filter
-      const locationFilter = isOwner ? {} : { location_id: locationId }
-
       // 1. Today's sales
       let todaySalesQuery = supabase
         .from('sales')
