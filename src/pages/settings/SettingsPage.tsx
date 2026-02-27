@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '../../store/authStore'
 import { supabase } from '../../lib/supabase'
 import {
-  Store, MapPin, Save, Plus, Trash2, Loader2,
+  Store, MapPin, Save, Plus, Loader2,
   Building2, Phone, Globe, FileText, AlertTriangle,
-  CheckCircle, Settings
+  CheckCircle
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'

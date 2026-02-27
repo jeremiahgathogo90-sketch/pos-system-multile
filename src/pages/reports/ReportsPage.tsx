@@ -19,13 +19,6 @@ type DateRange = 'today' | 'week' | 'month' | 'year' | 'custom'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
-const paymentIcons: Record<string, any> = {
-  cash: Banknote,
-  card: CreditCard,
-  mobile_money: Smartphone,
-  credit: Users,
-}
-
 const paymentColors: Record<string, string> = {
   cash: 'bg-green-100 text-green-700',
   card: 'bg-blue-100 text-blue-700',

@@ -35,7 +35,6 @@ const getActionConfig = (action: string) =>
   ACTION_CONFIG[action] ?? { label: action.replace(/_/g,' '), color: 'bg-blue-100 text-blue-700', icon: Edit3 }
 
 export default function AuditLogPage() {
-  const { profile } = useAuthStore()
   const [entries, setEntries]         = useState<AuditEntry[]>([])
   const [isLoading, setIsLoading]     = useState(true)
   const [search, setSearch]           = useState('')
@@ -142,7 +141,7 @@ export default function AuditLogPage() {
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-gray-400" />
           <select value={actionFilter} onChange={e => setActionFilter(e.target.value)}
-            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none text-gray-700">
+            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none text-gray-700" aria-label="Select action type filter">
             <option value="all">All Actions</option>
             {uniqueActions.map(a => (
               <option key={a} value={a}>{getActionConfig(a).label}</option>

@@ -293,9 +293,6 @@ export default function UsersPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<Profile | null>(null)
 
-  const isOwner = profile?.role === 'owner'
-  const isCrossBranch = profile?.role === 'owner' || profile?.role === 'accountant'
-
   const fetchUsers = useCallback(async () => {
     let q = supabase
       .from('profiles')

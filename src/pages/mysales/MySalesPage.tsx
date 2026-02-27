@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase'
 import {
   Banknote, CreditCard, Smartphone, User, Search,
   RefreshCw, Printer, X, Loader2, CheckCircle,
-  Clock, TrendingUp, Receipt, AlertCircle, ArrowDownCircle, Calendar,
+  TrendingUp, Receipt, AlertCircle, ArrowDownCircle, Calendar,
   DollarSign, AlertTriangle
 } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -75,7 +75,6 @@ export default function MySalesPage() {
   const [filterMethod, setFilterMethod] = useState('all')
   const [dateRange, setDateRange]         = useState<'today'|'week'|'month'|'all'>('today')
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
-  const [showReprint, setShowReprint]   = useState(false)
   const [showCollect, setShowCollect]   = useState(false)
   const [collectAmount, setCollectAmount] = useState('')
   const [collectNotes, setCollectNotes]   = useState('')
