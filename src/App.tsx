@@ -47,17 +47,8 @@ export default function App() {
   useEffect(() => {
     let cancelled = false
 
-    // ── Failsafe: never stay stuck loading more than 4 seconds ──
-    const failsafeTimer = setTimeout(() => {
-      if (!cancelled) {
-        console.warn('Auth init timeout — forcing ready state')
-        setIsInitializing(false)
-      }
-    }, 8000)
-
     const initAuth = async () => {
       try {
-        // 1. Get current session from Supabase
         const { data: { session: currentSession } } = await supabase.auth.getSession()
 
         if (cancelled) return
@@ -66,23 +57,19 @@ export default function App() {
           setSession(currentSession)
           await fetchProfile(currentSession.user.id)
         } else {
-          // No session — clear state and proceed to login
           setSession(null)
           setProfile(null)
         }
       } catch (err) {
         console.error('Auth init error:', err)
       } finally {
-        if (!cancelled) {
-          clearTimeout(failsafeTimer)
-          setIsInitializing(false)
-        }
+        if (!cancelled) setIsInitializing(false)
       }
     }
 
     initAuth()
 
-    // 2. Listen for auth changes (login, logout, token refresh)
+    // Listen for auth changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (cancelled) return
@@ -102,12 +89,10 @@ export default function App() {
 
     return () => {
       cancelled = true
-      clearTimeout(failsafeTimer)
       subscription.unsubscribe()
     }
   }, [])
 
-  // Show spinner only during initial auth check
   if (isInitializing) return <LoadingScreen />
 
   return (
