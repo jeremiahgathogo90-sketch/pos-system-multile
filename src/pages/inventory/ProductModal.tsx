@@ -161,6 +161,7 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
                 type="number" step="0.01" min="0"
                 aria-label="Buying price"
                 placeholder="0.00"
+                onFocus={e => e.target.select()}
                 className={inputClass(!!errors.buying_price)} />
             </Field>
             <Field label="Selling Price (KES) *" error={errors.selling_price?.message}>
@@ -169,6 +170,7 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
                 type="number" step="0.01" min="0"
                 aria-label="Selling price"
                 placeholder="0.00"
+                onFocus={e => e.target.select()}
                 className={inputClass(!!errors.selling_price)} />
             </Field>
           </div>
@@ -181,6 +183,7 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
                 type="number" min="0"
                 aria-label="Stock quantity"
                 placeholder="0"
+                onFocus={e => e.target.select()}
                 className={inputClass(!!errors.stock_quantity)} />
             </Field>
             <Field label="Unit *" error={errors.unit?.message}>
