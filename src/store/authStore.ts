@@ -15,6 +15,7 @@ interface AuthState {
   setProfile:    (profile: Profile | null) => void
   fetchProfile:  (userId: string) => Promise<void>
   logout:        () => void
+  signOut:       () => void   // alias for logout
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -38,14 +39,25 @@ export const useAuthStore = create<AuthState>()(
         set({ session: null, user: null, profile: null, isLoading: false })
       },
 
+      signOut: () => {
+        set({ session: null, user: null, profile: null, isLoading: false })
+      },
+
       fetchProfile: async (userId: string) => {
         set({ isLoading: true })
         try {
+          // 6-second timeout to prevent hanging on slow/paused Supabase
+          const controller = new AbortController()
+          const timer = setTimeout(() => controller.abort(), 6000)
+
           const { data, error } = await supabase
             .from('profiles')
             .select('*, location:locations(id, name)')
             .eq('id', userId)
+            .abortSignal(controller.signal)
             .single()
+
+          clearTimeout(timer)
 
           if (error) throw error
           set({ profile: data, isLoading: false })

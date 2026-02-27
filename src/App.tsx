@@ -53,7 +53,7 @@ export default function App() {
         console.warn('Auth init timeout — forcing ready state')
         setIsInitializing(false)
       }
-    }, 4000)
+    }, 8000)
 
     const initAuth = async () => {
       try {
