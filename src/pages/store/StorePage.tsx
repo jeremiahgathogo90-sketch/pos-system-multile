@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
-import { useRealtime } from '../../hooks/useRealtime'
 import {
   Package, Plus, Truck, CheckCircle,
   XCircle, Clock, Search, X, Loader2, Eye,
@@ -190,7 +189,7 @@ function NewProductModal({
               <p className="text-xs text-gray-400">Create product and add to warehouse</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center" title="Close modal" aria-label="Close">
+          <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center" aria-label="Close" title="Close">
             <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
@@ -215,8 +214,7 @@ function NewProductModal({
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category</label>
               <div className="relative">
                 <select value={categoryId} onChange={e => setCategoryId(e.target.value)}
-                  className={clsx(inputClass, categories.length === 0 ? 'cursor-not-allowed bg-gray-100' : '')} disabled={categories.length === 0}
-                  title={categories.length === 0 ? 'No categories available. Create a category first.' : 'Select category'}>
+                  className={inputClass + ' appearance-none pr-8'} aria-label="Category" title="Category">
                   <option value="">No category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -278,19 +276,17 @@ function NewProductModal({
         {/* Initial stock toggle */}
         <div className="px-6 pb-4 space-y-3">
           <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
-              <div>
-                <p className="text-sm font-semibold text-gray-700">Add initial stock to warehouse</p>
-                <p className="text-xs text-gray-400 mt-0.5">Units immediately available for transfer</p>
-              </div>
-              <button onClick={() => setAddToStore(v => !v)}
-                className={clsx('w-11 h-6 rounded-full transition-colors relative shrink-0',
-                  addToStore ? 'bg-purple-500' : 'bg-gray-300')}
-                title={addToStore ? 'Disable initial stock' : 'Enable initial stock'}
-                aria-label={addToStore ? 'Disable initial stock' : 'Enable initial stock'}>
-                <span className={clsx('absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all',
-                  addToStore ? 'left-5' : 'left-0.5')} />
-              </button>
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Add initial stock to warehouse</p>
+              <p className="text-xs text-gray-400 mt-0.5">Units immediately available for transfer</p>
             </div>
+            <button onClick={() => setAddToStore(v => !v)}
+              className={clsx('w-11 h-6 rounded-full transition-colors relative shrink-0',
+                addToStore ? 'bg-purple-500' : 'bg-gray-300')} aria-label="Toggle initial stock" title="Toggle initial stock">
+              <span className={clsx('absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all',
+                addToStore ? 'left-5' : 'left-0.5')} />
+            </button>
+          </div>
           {addToStore && (
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Initial Quantity</label>
@@ -303,7 +299,7 @@ function NewProductModal({
 
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3 shrink-0">
           <button onClick={onClose}
-            className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">
+            className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm" aria-label="Close" title="Close">
             Cancel
           </button>
           <button onClick={handleSave} disabled={isSaving}
@@ -385,18 +381,18 @@ function ReceiveStockModal({ store, onSave, onClose }: { store: Store; onSave: (
               <p className="text-xs text-gray-400">Add incoming stock to {store.name}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center" title="Close modal" aria-label="Close">
+          <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center" aria-label="Close" title="Close">
             <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search product to receive..."
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-green-400 bg-gray-50" />
-            {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" aria-hidden="true" />}
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-green-400 bg-gray-50"  aria-label="Search" title="Search" />
+            {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />}
           </div>
 
           {results.length > 0 && (
@@ -436,18 +432,16 @@ function ReceiveStockModal({ store, onSave, onClose }: { store: Store; onSave: (
                       <td className="px-3 py-2">
                         <input type="number" min="1" value={item.quantity}
                           onChange={e => updateItem(item.product_id, 'quantity', parseInt(e.target.value) || 1)}
-                          className="w-20 mx-auto block text-center font-bold border-2 border-green-200 rounded-lg py-1 text-sm outline-none focus:border-green-500"
-                          title="Quantity" />
+                          className="w-20 mx-auto block text-center font-bold border-2 border-green-200 rounded-lg py-1 text-sm outline-none focus:border-green-500"  aria-label="Quantity" title="Quantity" />
                       </td>
                       <td className="px-3 py-2">
                         <input type="number" min="0" value={item.unit_cost}
                           onChange={e => updateItem(item.product_id, 'unit_cost', parseFloat(e.target.value) || 0)}
-                          className="w-28 ml-auto block text-right font-medium border border-gray-200 rounded-lg py-1 px-2 text-sm outline-none focus:border-green-400"
-                          title="Unit Cost (KES)" />
+                          className="w-28 ml-auto block text-right font-medium border border-gray-200 rounded-lg py-1 px-2 text-sm outline-none focus:border-green-400"  aria-label="Unit cost" title="Unit cost" />
                       </td>
                       <td className="px-2 py-2">
                         <button onClick={() => removeItem(item.product_id)}
-                          className="w-6 h-6 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center" title="Remove item" aria-label="Remove item">
+                          className="w-6 h-6 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center" aria-label="Remove item" title="Remove item">
                           <X className="w-3 h-3 text-red-400" />
                         </button>
                       </td>
@@ -468,10 +462,9 @@ function ReceiveStockModal({ store, onSave, onClose }: { store: Store; onSave: (
         </div>
 
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3 shrink-0">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm" aria-label="Close" title="Close">Cancel</button>
           <button onClick={handleSave} disabled={isSaving || items.length === 0}
-            className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+            className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : <><PackagePlus className="w-4 h-4" />Receive Stock</>}
           </button>
         </div>
@@ -543,7 +536,7 @@ function NewTransferModal({ store, storeStock, locations, onSave, onClose }: {
               <p className="text-xs text-gray-400">From: {store.name}</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center" title="Close modal" aria-label="Close">
+          <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center" aria-label="Close" title="Close">
             <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
@@ -557,7 +550,7 @@ function NewTransferModal({ store, storeStock, locations, onSave, onClose }: {
             </div>
             {locations.filter(l => l.is_active).length === 0 ? (
               <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-xl">
-                <Building2 className="w-5 h-5 text-orange-500 shrink-0" aria-hidden="true" />
+                <Building2 className="w-5 h-5 text-orange-500 shrink-0" />
                 <p className="text-sm text-orange-700 font-medium">No active branches registered yet.</p>
               </div>
             ) : (
@@ -585,10 +578,10 @@ function NewTransferModal({ store, storeStock, locations, onSave, onClose }: {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Add Products</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" aria-hidden="true" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search product in warehouse..."
-                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-400 bg-gray-50" />
+                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-400 bg-gray-50"  aria-label="Search" title="Search" />
             </div>
             {search && (
               <div className="mt-1 border border-gray-200 rounded-xl overflow-hidden shadow-lg max-h-48 overflow-y-auto">
@@ -637,24 +630,22 @@ function NewTransferModal({ store, storeStock, locations, onSave, onClose }: {
                         <td className="px-3 py-2">
                           <div className="flex items-center justify-center gap-1">
                             <button onClick={() => updateQty(item.product_id, item.quantity - 1)}
-                              className="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded flex items-center justify-center">
+                              className="w-6 h-6 bg-gray-100 hover:bg-gray-200 rounded flex items-center justify-center" aria-label="Decrease quantity" title="Decrease quantity">
                               <span className="text-gray-600 font-bold text-sm leading-none">−</span>
                             </button>
                             <input type="number" min={1} max={item.available} value={item.quantity}
                               onChange={e => updateQty(item.product_id, parseInt(e.target.value) || 1)}
-                              className="w-14 text-center font-bold text-gray-800 border-2 border-teal-200 rounded-lg py-0.5 outline-none focus:border-teal-500 text-sm"
-                              title="Quantity" />
+                              className="w-14 text-center font-bold text-gray-800 border-2 border-teal-200 rounded-lg py-0.5 outline-none focus:border-teal-500 text-sm"  aria-label="Quantity" title="Quantity" />
                             <button onClick={() => updateQty(item.product_id, item.quantity + 1)}
                               disabled={item.quantity >= item.available}
-                              className="w-6 h-6 bg-teal-100 hover:bg-teal-200 disabled:opacity-40 rounded flex items-center justify-center" title="Increase quantity">
+                              className="w-6 h-6 bg-teal-100 hover:bg-teal-200 disabled:opacity-40 rounded flex items-center justify-center" aria-label="Increase quantity" title="Increase quantity">
                               <span className="text-teal-700 font-bold text-sm leading-none">+</span>
                             </button>
                           </div>
                         </td>
                         <td className="px-2 py-2">
                           <button onClick={() => removeItem(item.product_id)}
-                            className="w-6 h-6 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center"
-                            title="Remove from transfer" aria-label="Remove from transfer">
+                            className="w-6 h-6 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center" aria-label="Remove item" title="Remove item">
                             <X className="w-3 h-3 text-red-400" />
                           </button>
                         </td>
@@ -679,9 +670,9 @@ function NewTransferModal({ store, storeStock, locations, onSave, onClose }: {
         </div>
 
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3 shrink-0">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm" title="Cancel transfer creation">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm" aria-label="Close" title="Close">Cancel</button>
           <button onClick={handleSave} disabled={isSaving || items.length === 0 || !locationId}
-            className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" title="Create stock transfer request">
+            className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" />Sending...</> : <><Truck className="w-4 h-4" />Send Transfer</>}
           </button>
         </div>
@@ -714,11 +705,10 @@ function TransferDetailModal({ transfer, isOwner, storeName, onAction, onClose }
               <StatusIcon className="w-3 h-3" />{cfg.label}
             </span>
             <button onClick={() => printTransferReceipt(transfer, storeName)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg text-xs font-semibold"
-              title="Print transfer receipt" aria-label="Print">
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg text-xs font-semibold" aria-label="Print" title="Print">
               <Printer className="w-3.5 h-3.5" />Print
             </button>
-            <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center" title="Close modal" aria-label="Close">
+            <button onClick={onClose} className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center" aria-label="Close" title="Close">
               <X className="w-4 h-4 text-gray-500" />
             </button>
           </div>
@@ -784,14 +774,14 @@ function TransferDetailModal({ transfer, isOwner, storeName, onAction, onClose }
             {transfer.status === 'pending' && (
               <div className="flex gap-3">
                 <button onClick={() => { onAction(transfer.id, 'rejected'); onClose() }}
-                  className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-sm border border-red-200">✕ Reject</button>
+                  className="flex-1 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-sm border border-red-200" aria-label="Close" title="Close">✕ Reject</button>
                 <button onClick={() => { onAction(transfer.id, 'approved'); onClose() }}
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm">✓ Approve Transfer</button>
+                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm" aria-label="Close" title="Close">✓ Approve Transfer</button>
               </div>
             )}
             {transfer.status === 'approved' && (
               <button onClick={() => { onAction(transfer.id, 'completed'); onClose() }}
-                className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2">
+                className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2" aria-label="Close" title="Close">
                 <CheckCircle className="w-4 h-4" />Mark as Completed (Stock Moved)
               </button>
             )}
@@ -853,7 +843,7 @@ function StockAdjustModal({ item, onSave, onClose }: { item: StoreStock; onSave:
             <h3 className="font-bold text-gray-800">Adjust Stock</h3>
             <p className="text-xs text-gray-400 truncate max-w-64">{item.product.name}</p>
           </div>
-          <button onClick={onClose} title="Close modal" aria-label="Close"><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+          <button onClick={onClose} aria-label="Close" title="Close"><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
         </div>
         <div className="px-6 py-5 space-y-4">
           <div className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
@@ -876,7 +866,7 @@ function StockAdjustModal({ item, onSave, onClose }: { item: StoreStock; onSave:
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">{adjType === 'set' ? 'New Quantity' : 'Quantity'}</label>
             <input type="number" min="0" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="0"
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-lg font-bold outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 bg-gray-50" />
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-lg font-bold outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 bg-gray-50"  aria-label="Quantity" title="Quantity" />
           </div>
           {quantity && (
             <div className={clsx('flex items-center justify-between rounded-xl px-4 py-3',
@@ -905,7 +895,7 @@ function StockAdjustModal({ item, onSave, onClose }: { item: StoreStock; onSave:
               className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-400 bg-gray-50" />
           </div>
           <div className="flex gap-3 pt-1">
-            <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">Cancel</button>
+            <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm" aria-label="Close" title="Close">Cancel</button>
             <button onClick={handleSave} disabled={isSaving || !quantity || !reason.trim()}
               className="flex-1 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
@@ -996,13 +986,13 @@ export default function StorePage() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  // ── Realtime: refresh store data whenever tables change ──
-  // Both owner and storekeeper get live updates
-  useRealtime(
-    ['store_stock', 'stock_transfers', 'stock_transfer_items', 'products'],
-    () => { if (activeStoreIdRef.current) fetchStoreData(activeStoreIdRef.current) },
-    []
-  )
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (activeStoreIdRef.current) fetchStoreData(activeStoreIdRef.current)
+    }, 30_000)
+    return () => clearInterval(timer)
+  }, [fetchStoreData])
 
   const handleTransferAction = async (transferId: string, action: 'approved' | 'rejected' | 'completed') => {
     try {
@@ -1074,23 +1064,21 @@ export default function StorePage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-            <button onClick={() => activeStore && fetchStoreData(activeStore.id)}
-              className="w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center"
-              title="Refresh data" aria-label="Refresh">
-              <RefreshCw className="w-4 h-4 text-gray-500" />
-            </button> 
+          <button onClick={() => activeStore && fetchStoreData(activeStore.id)}
+            className="w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center justify-center" aria-label="Refresh" title="Refresh">
+            <RefreshCw className="w-4 h-4 text-gray-500" />
+          </button>
           {(isOwner || isStorekeeper) && activeStore && storeStock.length > 0 && (
             <button onClick={() => setShowLowStockPanel(true)}
               className={clsx('flex items-center gap-2 px-4 py-2 font-semibold rounded-xl text-sm shadow-sm transition-all',
-                alertCount > 0 ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600')}>
+                alertCount > 0 ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-600')} aria-label="Low stock alerts" title="Low stock alerts">
               <TriangleAlert className="w-4 h-4" />
               {alertCount > 0 ? `${alertCount} Alerts` : 'No Alerts'}
             </button>
           )}
           {(isOwner || isStorekeeper) && (
             <button onClick={() => setShowNewProduct(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-sm shadow-sm"
-              title="Add a new product to the system">
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-sm shadow-sm">
               <Tag className="w-4 h-4" />New Product
             </button>
           )}
@@ -1115,7 +1103,8 @@ export default function StorePage() {
           {stores.map(store => (
             <button key={store.id} onClick={() => { setActiveStore(store); fetchStoreData(store.id) }}
               className={clsx('px-4 py-2 rounded-xl text-sm font-semibold border transition-all',
-                activeStore?.id === store.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 border-gray-200 hover:border-teal-300')}>
+                activeStore?.id === store.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-gray-600 border-gray-200 hover:border-teal-300')}
+              aria-label={`Select store: ${store.name}`}>
               <Warehouse className="w-3.5 h-3.5 inline mr-1.5" />{store.name}
             </button>
           ))}
@@ -1149,8 +1138,7 @@ export default function StorePage() {
             </div>
             {alertCount > 0 && (
               <button onClick={() => setShowLowStockPanel(v => !v)}
-                className="text-xs text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full font-semibold hover:bg-orange-200"
-                title={`${alertCount} products are low or out of stock`}>
+                className="text-xs text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full font-semibold hover:bg-orange-200" aria-label="Low stock alerts" title="Low stock alerts">
                 {showLowStockPanel ? 'Hide' : 'View'}
               </button>
             )}
@@ -1166,8 +1154,7 @@ export default function StorePage() {
             </div>
             {pendingCount > 0 && (
               <button onClick={() => setActiveTab('transfers')}
-                className="text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full font-semibold hover:bg-orange-100"
-                title="View pending transfers">Review</button>
+                className="text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full font-semibold hover:bg-orange-100">Review</button>
             )}
           </div>
           <p className={clsx('text-2xl font-black', pendingCount > 0 ? 'text-orange-600' : 'text-gray-400')}>{pendingCount}</p>
@@ -1184,8 +1171,7 @@ export default function StorePage() {
               <TriangleAlert className="w-4 h-4 text-orange-600" />
               <p className="text-sm font-bold text-orange-800">Stock Alerts — {alertCount} product{alertCount !== 1 ? 's' : ''} need attention</p>
             </div>
-            <button onClick={() => setShowLowStockPanel(false)} className="text-orange-400 hover:text-orange-600"
-              title="Close alerts panel" aria-label="Close">
+            <button onClick={() => setShowLowStockPanel(false)} className="text-orange-400 hover:text-orange-600" aria-label="Low stock alerts" title="Low stock alerts">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -1213,8 +1199,7 @@ export default function StorePage() {
                     {stock.quantity === 0 ? 'Out of Stock' : 'Low Stock'}
                   </span>
                   <button onClick={() => { setAdjustingItem(stock); setShowAdjustModal(true) }}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-xs font-semibold"
-                    title="Manually adjust stock quantity" aria-label="Adjust">
+                    className="flex items-center gap-1 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-xs font-semibold" aria-label="Adjust stock" title="Adjust stock">
                     <Sliders className="w-3.5 h-3.5" />Adjust
                   </button>
                 </div>
@@ -1229,8 +1214,7 @@ export default function StorePage() {
         {(['stock', 'transfers'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={clsx('px-5 py-2 rounded-lg text-sm font-semibold transition-all',
-              activeTab === tab ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700')}
-              title={tab === 'stock' ? 'View and manage stock inventory' : 'View and manage stock transfers'}>
+              activeTab === tab ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
             {tab === 'stock'
               ? <><Package className="w-4 h-4 inline mr-1.5" />Stock Inventory</>
               : <><Truck className="w-4 h-4 inline mr-1.5" />Transfers{pendingCount > 0 && <span className="ml-1.5 bg-orange-500 text-white text-xs rounded-full w-4 h-4 inline-flex items-center justify-center font-black">{pendingCount}</span>}</>
@@ -1247,7 +1231,7 @@ export default function StorePage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input value={stockSearch} onChange={e => setStockSearch(e.target.value)}
                 placeholder="Search products in warehouse..."
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-400" />
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-400"  aria-label="Search" title="Search" />
             </div>
             <span className="text-xs text-gray-400 shrink-0">{filteredStock.length} products</span>
           </div>
@@ -1292,8 +1276,7 @@ export default function StorePage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <button onClick={() => { setAdjustingItem(stock); setShowAdjustModal(true) }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-gray-50 hover:bg-teal-50 text-gray-500 hover:text-teal-700 border border-gray-200 hover:border-teal-300 rounded-lg text-xs font-semibold transition-all"
-                        title="Adjust stock for this product" aria-label="Adjust">
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-gray-50 hover:bg-teal-50 text-gray-500 hover:text-teal-700 border border-gray-200 hover:border-teal-300 rounded-lg text-xs font-semibold transition-all" aria-label="Adjust stock" title="Adjust stock">
                         <Sliders className="w-3 h-3" />Adjust
                       </button>
                     </td>
@@ -1313,11 +1296,10 @@ export default function StorePage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input value={transferSearch} onChange={e => setTransferSearch(e.target.value)}
                 placeholder="Search transfer # or branch..."
-                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-400 bg-white" />
+                className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-teal-400 bg-white"  aria-label="Search transfers" title="Search transfers" />
             </div>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-              className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-teal-400 bg-white font-medium"
-              title="Filter transfers by status">
+              className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-teal-400 bg-white font-medium" aria-label="Filter by status" title="Filter by status">
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
@@ -1374,8 +1356,7 @@ export default function StorePage() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <button onClick={() => setSelectedTransfer(transfer)}
-                            className="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mx-auto"
-                            title="View transfer details" aria-label="View details">
+                            className="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mx-auto" aria-label="View transfer details" title="View transfer details">
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                         </td>

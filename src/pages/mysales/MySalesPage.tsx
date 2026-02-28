@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useRealtime } from '../../hooks/useRealtime'
 import { useAuthStore } from '../../store/authStore'
 import { useRegisterStore } from '../../store/registerStore'
 import { supabase } from '../../lib/supabase'
@@ -126,7 +125,7 @@ export default function MySalesPage() {
 
       const { data, error } = await q
       if (error) throw error
-      setSales(data as unknown as Sale[] || [])
+      setSales((data as unknown as Sale[]) || [])
     } catch (err: any) {
       toast.error('Failed to load sales')
       console.error(err)
@@ -141,7 +140,11 @@ export default function MySalesPage() {
   useEffect(() => { fetchSales() }, [dateRange])
 
   // Real-time: refresh when new sales come in
-  useRealtime(['sales', 'sale_payments'], fetchSales, [profile?.id])
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(fetchSales, 30_000)
+    return () => clearInterval(timer)
+  }, [fetchSales])
 
 
   // Fetch the customer's TOTAL outstanding balance (all sales combined)
@@ -398,10 +401,11 @@ export default function MySalesPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" placeholder="Search customer name or receipt #" value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 bg-white" />
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-400 bg-white"  aria-label="Search" title="Search" />
           </div>
           <select value={filterMethod} onChange={e => setFilterMethod(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 bg-white font-medium"          aria-label="Filter sales by payment method">
+            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 bg-white font-medium"
+            title="Filter sales by payment method" aria-label="Payment method filter">
             <option value="all">All Methods</option>
             <option value="cash">Cash</option>
             <option value="card">Card</option>
@@ -535,7 +539,7 @@ export default function MySalesPage() {
                         <button
                           onClick={() => { setSelectedSale(sale); handlePrintReceipt(sale) }}
                           title="Print receipt"
-                          className="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center transition-colors">
+                          className="w-8 h-8 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center transition-colors" aria-label="Print">
                           <Printer className="w-3.5 h-3.5" />
                         </button>
                         {hasCredit && sale.customer_id && (sale.customer?.outstanding_balance ?? 1) > 0 && (
@@ -546,7 +550,7 @@ export default function MySalesPage() {
                               fetchCustomerBalance(sale.customer_id!)
                             }}
                             title="Collect total customer debt"
-                            className="w-8 h-8 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center transition-colors">
+                            className="w-8 h-8 bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center transition-colors" aria-label="Collect payment">
                             <ArrowDownCircle className="w-3.5 h-3.5" />
                           </button>
                         )}
@@ -571,7 +575,7 @@ export default function MySalesPage() {
                 <h3 className="font-bold text-gray-800">Collect Payment</h3>
                 <p className="text-xs text-gray-400">Clear customer outstanding balance</p>
               </div>
-              <button onClick={() => { setShowCollect(false); setSelectedSale(null); setCustomerBalance(0) }} className="p-1 rounded hover:bg-gray-100 transition-colors" aria-label="Close collect payment modal">
+              <button onClick={() => { setShowCollect(false); setSelectedSale(null); setCustomerBalance(0) }} aria-label="Collect payment" title="Collect payment">
                 <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
               </button>
             </div>
@@ -636,8 +640,8 @@ export default function MySalesPage() {
                   type="number" min="0" max={customerBalance}
                   value={collectAmount}
                   onChange={e => setCollectAmount(e.target.value)}
+                  placeholder="Enter amount to collect"
                   className="w-full px-4 py-3 border-2 border-orange-300 rounded-xl text-2xl font-black outline-none focus:border-orange-500 text-right bg-orange-50 text-orange-800"
-                  aria-label="Enter amount to collect"
                 />
                 {/* Remaining balance preview */}
                 {collectAmount && parseFloat(collectAmount) > 0 && (
@@ -680,7 +684,7 @@ export default function MySalesPage() {
               <div className="flex gap-3 pt-1">
                 <button
                   onClick={() => { setShowCollect(false); setSelectedSale(null); setCustomerBalance(0) }}
-                  className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm">
+                  className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 text-sm" aria-label="Collect payment" title="Collect payment">
                   Cancel
                 </button>
                 <button

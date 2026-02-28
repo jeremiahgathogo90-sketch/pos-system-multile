@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthStore } from '../../store/authStore'
 import { useBranchStore, getEffectiveLocationId } from '../../store/branchStore'
-import { useRealtime } from '../../hooks/useRealtime'
 import { supabase } from '../../lib/supabase'
 import {
   TrendingUp, ShoppingCart, Users, Package,
@@ -225,7 +224,11 @@ export default function DashboardPage() {
     fetchStats()
   }, [fetchStats])
 
-  useRealtime(['sales', 'sale_payments', 'products', 'customers'], fetchStats, [effectiveLocationId])
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(fetchStats, 30_000)
+    return () => clearInterval(timer)
+  }, [fetchStats])
 
   const branchLabel = (profile?.role === 'owner' || profile?.role === 'accountant')
     ? selectedBranchName
