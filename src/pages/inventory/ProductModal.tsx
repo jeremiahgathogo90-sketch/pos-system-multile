@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch, type Control } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { Resolver } from 'react-hook-form'
@@ -27,13 +27,57 @@ interface Props {
 
 const units = ['pcs', 'kg', 'g', 'litre', 'ml', 'box', 'dozen', 'pack', 'bag', 'roll']
 
+
+// ── Isolated margin preview — only THIS re-renders on price change ──
+function MarginPreview({ control }: { control: Control<FormData> }) {
+  const buyingPrice  = useWatch({ control, name: 'buying_price' })
+  const sellingPrice = useWatch({ control, name: 'selling_price' })
+
+  const bp = Number(buyingPrice)  || 0
+  const sp = Number(sellingPrice) || 0
+  const margin = bp > 0 && sp > 0
+    ? (((sp - bp) / bp) * 100).toFixed(1)
+    : null
+
+  return (
+    <div className={`rounded-xl p-3 border ${
+      margin === null
+        ? 'bg-gray-50 border-gray-100'
+        : Number(margin) < 0
+          ? 'bg-red-50 border-red-100'
+          : Number(margin) < 10
+            ? 'bg-orange-50 border-orange-100'
+            : 'bg-green-50 border-green-100'
+    }`}>
+      <p className={`text-xs font-medium ${
+        margin === null ? 'text-gray-400'
+        : Number(margin) < 0 ? 'text-red-600'
+        : Number(margin) < 10 ? 'text-orange-600'
+        : 'text-green-600'
+      }`}>Margin Preview</p>
+      <p className={`text-sm mt-0.5 font-semibold ${
+        margin === null ? 'text-gray-400'
+        : Number(margin) < 0 ? 'text-red-700'
+        : Number(margin) < 10 ? 'text-orange-700'
+        : 'text-green-700'
+      }`}>
+        {margin === null
+          ? 'Set prices above to see profit margin'
+          : Number(margin) < 0
+            ? `⚠ Selling below cost (${margin}%)`
+            : `${margin}% margin — KES ${(sp - bp).toFixed(2)} profit per unit`}
+      </p>
+    </div>
+  )
+}
+
 export default function ProductModal({ product, categories, onSave, onClose }: Props) {
   const [isSaving, setIsSaving] = useState(false)
 
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema) as unknown as Resolver<FormData>,
@@ -47,14 +91,6 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
       unit:           product?.unit           || 'pcs',
     },
   })
-
-  const buyingPrice  = watch('buying_price')
-  const sellingPrice = watch('selling_price')
-
-  const margin =
-    buyingPrice > 0 && sellingPrice > 0
-      ? (((sellingPrice - buyingPrice) / buyingPrice) * 100).toFixed(1)
-      : null
 
   const onSubmit = async (data: FormData) => {
     setIsSaving(true)
@@ -196,37 +232,8 @@ export default function ProductModal({ product, categories, onSave, onClose }: P
             </Field>
           </div>
 
-          {/* Margin preview */}
-          <div className={`rounded-xl p-3 border ${
-            margin === null
-              ? 'bg-gray-50 border-gray-100'
-              : Number(margin) < 0
-                ? 'bg-red-50 border-red-100'
-                : Number(margin) < 10
-                  ? 'bg-orange-50 border-orange-100'
-                  : 'bg-green-50 border-green-100'
-          }`}>
-            <p className={`text-xs font-medium ${
-              margin === null ? 'text-gray-400'
-              : Number(margin) < 0 ? 'text-red-600'
-              : Number(margin) < 10 ? 'text-orange-600'
-              : 'text-green-600'
-            }`}>
-              Margin Preview
-            </p>
-            <p className={`text-sm mt-0.5 font-semibold ${
-              margin === null ? 'text-gray-400'
-              : Number(margin) < 0 ? 'text-red-700'
-              : Number(margin) < 10 ? 'text-orange-700'
-              : 'text-green-700'
-            }`}>
-              {margin === null
-                ? 'Set prices above to see profit margin'
-                : Number(margin) < 0
-                  ? `⚠ Selling below cost (${margin}%)`
-                  : `${margin}% margin — KES ${(sellingPrice - buyingPrice).toFixed(2)} profit per unit`}
-            </p>
-          </div>
+          {/* Margin preview — isolated component prevents input re-render freeze */}
+          <MarginPreview control={control} />
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
